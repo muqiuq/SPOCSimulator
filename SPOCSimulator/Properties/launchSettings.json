@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SPOCSimulator": {
+      "commandName": "Project",
+      "commandLineArgs": "generate --dist json\\ticketsdistribution.json --tickets 5000 --days 1"
+    }
+  }
+}
