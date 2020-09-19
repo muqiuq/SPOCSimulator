@@ -1,10 +1,10 @@
 ﻿using SPOCSimulator.Models;
-
+using SPOCSimulator.Simulation.Ticker.Helper;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SPOCSimulator.Simulation.Entities
+namespace SPOCSimulator.Simulation.Ticker
 {
     public class EmployeeTicker : ITicker
     {
@@ -16,6 +16,10 @@ namespace SPOCSimulator.Simulation.Entities
 
         private EmployeeType employeeType;
 
+        private int shiftEnd;
+
+        private EmployeeTickerState employeeTickerState;
+
 
         public bool HasTicket
         {
@@ -26,41 +30,81 @@ namespace SPOCSimulator.Simulation.Entities
 
         private int ticksToFinish;
 
-        public EmployeeTicker(TicketQueue inputQueue, TicketQueue doneOutputQueue, TicketQueue escalateOutputQueue, EmployeeType employeeType)
+        private int workedTicks = 0;
+        
+
+        public EmployeeTicker(TicketQueue inputQueue, TicketQueue doneOutputQueue, TicketQueue escalateOutputQueue, EmployeeType employeeType, int shiftEnd)
         {
             this.inputQueue = inputQueue;
             this.doneOutputQueue = doneOutputQueue;
             this.escalateOutputQueue = escalateOutputQueue;
             this.employeeType = employeeType;
+            this.shiftEnd = shiftEnd;
+
+            employeeTickerState = EmployeeTickerState.WarmUp;
+            ticksToFinish = BoundaryConditions.EmployeeWarmUpDuration;
         }
 
         public void Tick(int day, int ticks)
         {
-            if(!HasTicket)
-            {
-                // No ticket? Get a new one!
-                currentTicket = inputQueue.Dequeue();
-                if (!HasTicket) return;
-                ticksToFinish = currentTicket.TicksToSolve(employeeType.Level);
-                currentTicket.StartSolving(ticks);
-            }
-            else if(ticksToFinish > 0)
+            
+
+            if (employeeTickerState == EmployeeTickerState.WarmUp)
             {
                 ticksToFinish--;
+                if (ticksToFinish <= 0) employeeTickerState = EmployeeTickerState.Working;
+                workedTicks++;
             }
-            else
+            else if (employeeTickerState == EmployeeTickerState.Working)
             {
-                if (currentTicket.MoreDifficultyThen(employeeType.Level))
+                workedTicks++;
+                if (!HasTicket)
                 {
-                    currentTicket.StopSolving(ticks);
-                    escalateOutputQueue.Enqueue(currentTicket);
+                    if (ticks >= shiftEnd)
+                    {
+                        // Shift done go into cleanup
+                        employeeTickerState = EmployeeTickerState.Working;
+                        ticksToFinish = BoundaryConditions.EmployeeCleanUpDuration;
+                    }
+                    else
+                    {
+                        // No ticket? Get a new one!
+                        currentTicket = inputQueue.Dequeue();
+                        if (!HasTicket) return;
+                        ticksToFinish = currentTicket.TicksToSolve(employeeType.Level);
+                        currentTicket.StartSolving(ticks);
+                    }
+                }
+                else if (ticksToFinish > 0)
+                {
+                    ticksToFinish--;
                 }
                 else
                 {
-                    doneOutputQueue.Enqueue(currentTicket);
+                    if (currentTicket.MoreDifficultyThen(employeeType.Level))
+                    {
+                        currentTicket.StopSolving(ticks);
+                        escalateOutputQueue.Enqueue(currentTicket);
+                    }
+                    else
+                    {
+                        doneOutputQueue.Enqueue(currentTicket);
+                    }
+                    currentTicket = null;
                 }
-                currentTicket = null;
+            }
+            else if (employeeTickerState == EmployeeTickerState.CleanUp)
+            {
+                workedTicks++;
+                ticksToFinish--;
+                if (ticksToFinish <= 0) employeeTickerState = EmployeeTickerState.Done;
             }
         }
+
+        public bool Destroyable()
+        {
+            return employeeTickerState == EmployeeTickerState.Done;
+        }
     }
+
 }

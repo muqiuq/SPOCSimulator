@@ -6,6 +6,12 @@ namespace SPOCSimulator
 {
     public static class BoundaryConditions
     {
+
+        public static int DayLength = 1440;
+
+        public static int EmployeeWarmUpDuration = 30;
+        public static int EmployeeCleanUpDuration = 30;
+
         // All values in ticks (1 tick = 1 minute)
         public static int TicketResolvTime1stLevelMean = 30;
         public static int TicketResolvTime1stLevelStdDev = 15;

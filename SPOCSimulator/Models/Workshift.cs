@@ -1,51 +1,39 @@
 ﻿using Newtonsoft.Json;
+using SPOCSimulator.HIO;
+using SPOCSimulator.HIO.Utils;
+using SPOCSimulator.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SPOCSimulator.Models
 {
-    [JsonObject(MemberSerialization.OptIn)]
-    public class Workshift
+    public class Workshift : IHIOOutput<WorkshiftHIO>
     {
 
-        public int? _start = null;
-        public int? _stop = null;
-
-        public int Start { get
-            {
-                if (_start == null)
-                {
-                    TimeSpan ts = TimeSpan.Parse(StartTime);
-                    _start = (int)ts.TotalMinutes;
-                }
-                return _start.Value;
-            }
-        }
-        public int Stop
+        public int Begin
         {
-            get
-            {
-                if (_start == null)
-                {
-                    TimeSpan ts = TimeSpan.Parse(StartTime);
-                    _stop = (int)ts.TotalMinutes;
-                }
-                return _start.Value;
-            }
+            get; set;
+        }
+        public int End
+        {
+            get; set;
         }
 
-        [JsonProperty]
-        public string StartTime { get; set; }
-        
-        [JsonProperty]
-        public string StopTime { get; set; }
-
-        
+        /// <summary>
+        /// Type and count of each employee type. 
+        /// </summary>
         public IDictionary<EmployeeType, int> EmployeeTypes = new Dictionary<EmployeeType, int>();
 
-        [JsonProperty]
-        public IDictionary<string, int> EmployeeNames = new Dictionary<string, int>();
-
+        public WorkshiftHIO ToHIO()
+        {
+            return new WorkshiftHIO()
+            {
+                ShiftBegin = Helper.TicksToTimeString(Begin),
+                ShiftEnd = Helper.TicksToTimeString(End),
+                EmployeeTypeNames = EmployeeTypes.ToDictionary(o => o.Key.Name, o => o.Value)
+            };
+        }
     }
 }

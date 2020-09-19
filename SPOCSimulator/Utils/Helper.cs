@@ -33,5 +33,12 @@ namespace SPOCSimulator.Utils
             }
             return rv;
         }
+
+        public static string TicksToTimeString(int ticks)
+        {
+            var hours = (ticks / 60) % 23;
+            var min = ticks % 60;
+            return string.Format("{0:00}:{1:00}", hours, min);
+        }
     }
 }

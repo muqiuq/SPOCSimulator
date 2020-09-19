@@ -4,10 +4,10 @@ using System.Text;
 
 namespace SPOCSimulator.Simulation
 {
-    public interface ITicker
+    public interface ITickerManager
     {
-        public void Tick(int day, int ticks);
 
-        public bool Destroyable();
+        public void Add(ITicker ticker);
+
     }
 }

@@ -2,7 +2,7 @@
   "profiles": {
     "SPOCSimulator": {
       "commandName": "Project",
-      "commandLineArgs": "generate --dist json\\ticketsdistribution.json --tickets 5000 --days 1"
+      "commandLineArgs": "run -e json\\employeetypes.json -w json\\workshifts.json -t json\\ticket-generation.csv"
     }
   }
 }

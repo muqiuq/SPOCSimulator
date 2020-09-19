@@ -2,7 +2,7 @@
 using MathNet.Numerics.Distributions;
 using SPOCSimulator.Generator;
 using SPOCSimulator.Models;
-using SPOCSimulator.Simulation.Entities;
+using SPOCSimulator.Simulation.Ticker;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,8 +22,11 @@ namespace SPOCSimulator.Commands
         [Option("dist", HelpText = "path to tickets per day distribution json file", Required = true)]
         public string TicketsPerDayDistributionFileName { get; set; }
 
-        [Option('o', "output", HelpText = "Output filename", Default = "random-distribution.json")]
-        public string Filename { get; set; }
+        [Option("outplan", HelpText = "output ticket generation plan", Default = "ticket-generation.csv")]
+        public string FilenameTicketGeneration { get; set; }
+
+        [Option("outdist", HelpText = "output ticket distribution plan", Default = "ticket-disribution.json")]
+        public string FilenameTicketDistribution { get; set; }
 
         public int Run()
         {
@@ -46,7 +49,7 @@ namespace SPOCSimulator.Commands
                 }
             }
 
-            ticketsPerNDay.Save(Filename);
+            ticketsPerNDay.Save(FilenameTicketDistribution);
 
             Print("Generated Tickets per n day file");
 
@@ -55,7 +58,7 @@ namespace SPOCSimulator.Commands
 
             var gSupportLevel = new Normal(1.5, 1);
 
-            List<TicketEntity> tickets = new List<TicketEntity>();
+            TicketGenerationPlan tge = new TicketGenerationPlan();
 
             for (int day = 0; day < DaysToGenerate; day++)
             {
@@ -72,18 +75,18 @@ namespace SPOCSimulator.Commands
                             
                         }
                         var ticket = new TicketEntity(ticketNumber, supportLevel, GetLevelDifficulties(), (int)time);
-                        tickets.Add(ticket);
+                        tge.Tickets.Add(ticket);
                         ticketNumber++;
                     }
                     ticks += 60;
                 }
             }
 
-            var avg1StLevel = tickets.Average(i => i.DifficultyToSolveDurationMin[SupportLevel.Level1st]);
-            var avg2ndLevel = tickets.Average(i => i.DifficultyToSolveDurationMin[SupportLevel.Level2nd]);
-            var numOf1stLevel = tickets.Count(i => i.Difficulty == SupportLevel.Level1st);
-            var numOf2ndLevel = tickets.Count(i => i.Difficulty == SupportLevel.Level2nd);
-            var percentageOf1stLevel = (double)numOf1stLevel / (double)(numOf1stLevel + numOf2ndLevel);
+            var avg1StLevel = tge.Tickets.Average(i => i.DifficultyToSolveDurationMin[SupportLevel.Level1st]);
+            var avg2ndLevel = tge.Tickets.Average(i => i.DifficultyToSolveDurationMin[SupportLevel.Level2nd]);
+            var numOf1stLevel = tge.Tickets.Count(i => i.Difficulty == SupportLevel.Level1st);
+            var numOf2ndLevel = tge.Tickets.Count(i => i.Difficulty == SupportLevel.Level2nd);
+            var percentageOf1stLevel = (double)numOf1stLevel / (double)(numOf1stLevel + numOf2ndLevel) * 100;
             Console.WriteLine("Avg 1st: {0:0.00} ticks 2nd: {1:0.00} ticks Tickets: 1st: {2:0.00} ({3:0.00}%) 2nd: {4:0.00}", 
                 avg1StLevel, 
                 avg2ndLevel, 
@@ -91,8 +94,7 @@ namespace SPOCSimulator.Commands
                 percentageOf1stLevel,
                 numOf2ndLevel);
 
-
-
+            tge.Save(FilenameTicketGeneration);
 
             return 0;
         }

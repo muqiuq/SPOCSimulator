@@ -9,23 +9,25 @@ namespace SPOCSimulator
     {
         static void Main(string[] args)
         {
-            try
-            {
+            //try
+            //{
                 var parsed = Parser.Default.ParseArguments<
                     VoidCommand,
                     ExampleCommand,
-                    GenerateCommand
+                    GenerateCommand,
+                    RunCommand
                     >(args);
                 parsed.MapResult(
                     (VoidCommand c) => c.Run(),
                     (ExampleCommand c) => c.Run(),
                     (GenerateCommand c) => c.Run(),
+                    (RunCommand c) => c.Run(),
                     e => 1);
-            }catch(Exception e)
+            /*}catch(Exception e)
             {
                 Console.WriteLine(e);
                 if (Debugger.IsAttached) throw e;
-            }
+            }*/
 
         }
     }

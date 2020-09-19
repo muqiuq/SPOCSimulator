@@ -1,4 +1,4 @@
-﻿using SPOCSimulator.Simulation.Entities;
+﻿using SPOCSimulator.Simulation.Ticker;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,6 +14,11 @@ namespace SPOCSimulator.Simulation
         public bool Available()
         {
             return !queue.IsEmpty;
+        }
+
+        public int Count
+        {
+            get => queue.Count;
         }
 
         public void Enqueue(TicketEntity entity)
