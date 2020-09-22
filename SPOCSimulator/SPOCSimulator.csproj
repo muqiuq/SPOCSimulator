@@ -21,6 +21,9 @@
     <None Update="json\ticketsdistribution.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="json\ticketsperday.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="json\workshifts.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

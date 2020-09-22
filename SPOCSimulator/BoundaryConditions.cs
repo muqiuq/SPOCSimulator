@@ -9,12 +9,12 @@ namespace SPOCSimulator
 
         public static int DayLength = 1440;
 
-        public static int EmployeeWarmUpDuration = 30;
-        public static int EmployeeCleanUpDuration = 30;
+        public static int EmployeeWarmUpDuration = 15;
+        public static int EmployeeCleanUpDuration = 15;
 
         // All values in ticks (1 tick = 1 minute)
-        public static int TicketResolvTime1stLevelMean = 30;
-        public static int TicketResolvTime1stLevelStdDev = 15;
+        public static int TicketResolvTime1stLevelMean = 10;
+        public static int TicketResolvTime1stLevelStdDev = 20;
          
         public static int TicketResolvTime2ndLevelMean = 60;
         public static int TicketResolvTime2ndLevelStdDev = 45;

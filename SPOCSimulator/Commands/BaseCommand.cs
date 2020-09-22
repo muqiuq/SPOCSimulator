@@ -11,5 +11,10 @@ namespace SPOCSimulator.Commands
             Console.WriteLine(text);
         }
 
+        public void Print(string text, params object[] objs)
+        {
+            Console.WriteLine(string.Format(text, objs));
+        }
+
     }
 }

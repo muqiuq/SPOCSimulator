@@ -24,11 +24,11 @@ namespace SPOCSimulator.Simulation.Ticker
 
         public void Tick(int day, int ticks)
         {
-            var ticket = tickets.FirstOrDefault();
-            while(ticket != null && ticket.createAtTicks <= ticks)
+            var ticketsToAdd = tickets.Where(i => i.createAtTicks == ticks).ToList();
+            foreach(var ticket in ticketsToAdd)
             {
+                ticket.SetDeployed(ticks);
                 primaryInputQueue.Enqueue(ticket);
-                ticket = tickets.FirstOrDefault();
             }
         }
     }

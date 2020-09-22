@@ -16,6 +16,41 @@ namespace SPOCSimulator.Simulation.Ticker
 
         public int createAtTicks { get; private set; }
 
+        public int Duration
+        {
+            get
+            {
+                if (startTicks == null || stopTicks == null) return 0;
+                return (int)(stopTicks - startTicks);
+            }
+        }
+
+        public bool Started
+        {
+            get
+            {
+                return startTicks != null;
+            }
+        }
+
+        public bool Deployed
+        {
+            get
+            {
+                return deployedTicks != null;
+            }
+        }
+
+
+        public bool Solved
+        {
+            get
+            {
+                return startTicks != null && stopTicks != null;
+            }
+        }
+
+
         public TicketEntity(int number, SupportLevel difficulty, Dictionary<SupportLevel, int> difficultyToSolveDurationMin, int createAtTicks)
         {
             Number = number;
@@ -27,6 +62,12 @@ namespace SPOCSimulator.Simulation.Ticker
 
         public int? startTicks = null;
         public int? stopTicks = null;
+        public int? deployedTicks = null;
+
+        public void SetDeployed(int ticks)
+        {
+            if (deployedTicks == null) deployedTicks = ticks;
+        }
 
         public void StartSolving(int ticks)
         {

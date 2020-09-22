@@ -9,8 +9,8 @@
   },
   {
     "EmployeeTypeNames": {
-      "Susanne": 3,
-      "Peter": 2
+      "Susanne": 1,
+      "Peter": 0
     },
     "ShiftBegin": "12:00",
     "ShiftEnd": "21:00"

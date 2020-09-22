@@ -15,6 +15,8 @@ namespace SPOCSimulator.Simulation.Ticker
         private TicketQueue doneQueue;
         private TicketQueue firstToSecondLevelQueue;
 
+        private int ContinousEmployeeId = 0;
+
         public ShiftManagerTicker(
             ITickerManager tickerManager, 
             WorkshiftsCM workshiftsCM,
@@ -45,7 +47,14 @@ namespace SPOCSimulator.Simulation.Ticker
                 {
                     for(int a = 0; a < employeeTypeAndAmount.Value; a++)
                     {
-                        tickerManager.Add(new EmployeeTicker(primaryInputQueue, doneQueue, firstToSecondLevelQueue, employeeTypeAndAmount.Key, startingShift.End));
+                        tickerManager.Add(new EmployeeTicker(ContinousEmployeeId, 
+                            primaryInputQueue, 
+                            doneQueue, 
+                            firstToSecondLevelQueue, 
+                            employeeTypeAndAmount.Key, 
+                            day * BoundaryConditions.DayLength +  startingShift.End));
+
+                        ContinousEmployeeId++;
                     }
                 }
             }

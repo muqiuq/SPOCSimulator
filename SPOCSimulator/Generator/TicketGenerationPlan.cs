@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace SPOCSimulator.Generator
@@ -11,10 +12,29 @@ namespace SPOCSimulator.Generator
 
         public List<TicketEntity> Tickets { get; } = new List<TicketEntity>();
 
+
+        public int TotalTickets
+        {
+            get
+            {
+                return Tickets.Count;
+            }
+        }
+
+        public int NumberOfDays
+        {
+            get
+            {
+                return Tickets.OrderByDescending(t => t.createAtTicks).First().createAtTicks / BoundaryConditions.DayLength + 1;
+            }
+        }
+
         public TicketGenerationPlan()
         {
 
         }
+
+        
 
         public void Save(string filename)
         {
