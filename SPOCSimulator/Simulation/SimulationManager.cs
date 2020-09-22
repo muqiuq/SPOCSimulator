@@ -13,6 +13,10 @@ namespace SPOCSimulator.Simulation
         private TicketQueue doneQueue = new TicketQueue();
         private TicketQueue firstToSecondQueue = new TicketQueue();
 
+        public SimulationManager(WorkshiftsCM workshiftsCM)
+        {
+            this.workshiftsCM = workshiftsCM;
+        }
 
         public List<ITicker> Tickers { get; private set; } = new List<ITicker>();
 
