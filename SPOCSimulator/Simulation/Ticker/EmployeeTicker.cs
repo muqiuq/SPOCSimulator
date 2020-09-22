@@ -50,6 +50,24 @@ namespace SPOCSimulator.Simulation.Ticker
             ticksToFinish = BoundaryConditions.EmployeeWarmUpDuration;
         }
 
+
+        public bool Working
+        {
+            get
+            {
+                return employeeTickerState == EmployeeTickerState.Working;
+            }
+        }
+
+        public bool Productive
+        {
+            get
+            {
+                return employeeTickerState == EmployeeTickerState.Working && currentTicket != null;
+            }
+        }
+
+
         public void Tick(int day, int ticks)
         {
             if (employeeTickerState == EmployeeTickerState.WarmUp)
@@ -119,6 +137,8 @@ namespace SPOCSimulator.Simulation.Ticker
                 }
             }
         }
+
+
 
         public bool Destroyable()
         {

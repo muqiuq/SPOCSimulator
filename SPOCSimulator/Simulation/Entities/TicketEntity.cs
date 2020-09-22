@@ -16,12 +16,23 @@ namespace SPOCSimulator.Simulation.Ticker
 
         public int createAtTicks { get; private set; }
 
+        public int NumberOfStarts { get; private set; }
+
         public int Duration
         {
             get
             {
-                if (startTicks == null || stopTicks == null) return 0;
-                return (int)(stopTicks - startTicks);
+                if (deployedTicks == null || stopTicks == null) return 0;
+                return (int)(stopTicks - deployedTicks);
+            }
+        }
+
+        public int WaitingTime
+        {
+            get
+            {
+                if (startTicks == null || deployedTicks == null) return 0;
+                return (int)(deployedTicks - startTicks);
             }
         }
 
@@ -72,6 +83,7 @@ namespace SPOCSimulator.Simulation.Ticker
         public void StartSolving(int ticks)
         {
             if (startTicks == null) startTicks = ticks;
+            NumberOfStarts++;
         }
 
         public void StopSolving(int ticks)
