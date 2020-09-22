@@ -1,0 +1,16 @@
+[
+  {
+    "Name": "Susanne",
+    "Level": 1,
+    "HourlyWage": 10,
+    "SuccessRate": 1,
+    "DurationFactor": 1
+  },
+  {
+    "Name": "Peter",
+    "Level": 2,
+    "HourlyWage": 20,
+    "SuccessRate": 1,
+    "DurationFactor": 1
+  }
+]
