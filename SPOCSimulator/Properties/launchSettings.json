@@ -2,7 +2,7 @@
   "profiles": {
     "SPOCSimulator": {
       "commandName": "Project",
-      "commandLineArgs": "run -e json\\employeetypes.json -w json\\workshifts.json -t json\\ticket-generation.csv"
+      "commandLineArgs": "run -e json\\employeetypes.json -w json\\workshifts.json -t json\\ticket-generation.csv --usedb -p notickets4 --dropfirst"
     }
   }
 }

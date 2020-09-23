@@ -18,21 +18,21 @@ namespace SPOCSimulator.Commands
         {
         }
 
-        [Option('t', "testconn", HelpText = "Test Connection")]
-        public bool TestConnection { get; set; }
+        [Option("testconn", HelpText = "Test Connection")]
+        public bool DoTestConnection { get; set; }
 
         [Option("createtable", HelpText = "Create Datapoint table")]
-        public bool CreateTable { get; set; }
+        public bool DoCreateTable { get; set; }
 
         [Option("droptable", HelpText = "Drop Datapoint table")]
-        public bool DropTable { get; set; }
+        public bool DoDropTable { get; set; }
 
         [Option("truncatetable", HelpText = "Drop Datapoint table")]
-        public bool TruncateTable { get; set; }
+        public bool DoTruncateTable { get; set; }
 
         public int Run()
         {
-            if (Helper.DiffersFromThreshold(1, TestConnection, CreateTable, DropTable, TruncateTable))
+            if (Helper.DiffersFromThreshold(1, DoTestConnection, DoCreateTable, DoDropTable, DoTruncateTable))
             {
                 Print("You may only select one function!");
                 return 1;
@@ -40,26 +40,17 @@ namespace SPOCSimulator.Commands
             
             ConnectDb();
 
-            if(CreateTable)
+            if(DoCreateTable)
             {
-                var command = conn.CreateCommand();
-                command.CommandText = MySQLHelper.GetCreateTable("datapoints", typeof(SimulationDatapoint));
-                var res = command.ExecuteNonQuery();
-                Print("Table created {0}", res);
+                CreateTable(Table);
             }
-            if(DropTable)
+            if(DoDropTable)
             {
-                var command = conn.CreateCommand();
-                command.CommandText = "DROP TABLE datapoints;";
-                var res = command.ExecuteNonQuery();
-                Print("Table dropped {0}", res);
+                DropTable(Table);
             }
-            if(TruncateTable)
+            if(DoTruncateTable)
             {
-                var command = conn.CreateCommand();
-                command.CommandText = "TRUNCATE TABLE datapoints;";
-                var res = command.ExecuteNonQuery();
-                Print("Table truncated {0}", res);
+                TruncateTable(Table);
             }
 
             return 0;

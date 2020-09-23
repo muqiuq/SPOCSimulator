@@ -18,8 +18,9 @@ namespace SPOCSimulator.Simulation
         private TicketQueue primaryInputQueue = new TicketQueue();
         private TicketQueue doneQueue = new TicketQueue();
         private TicketQueue firstToSecondQueue = new TicketQueue();
+        private int unixTimestamp;
 
-        public int SimulationDatapointInterval { get; set; } = 30;
+        public int SimulationDatapointInterval { get; set; } = 10;
 
         public delegate void LogDelegate(string text);
         public event LogDelegate LogEvent;
@@ -35,6 +36,9 @@ namespace SPOCSimulator.Simulation
             this.daysToSimulate = daysToSimulate;
             Add(new ShiftManagerTicker(this, workshiftsCM, primaryInputQueue, doneQueue, firstToSecondQueue));
             Add(new NewTicketTicker(plan, primaryInputQueue));
+            //unixTimestamp = (Int32)(DateTime.Today.Subtract(new DateTime(1970, 1, 1).ToUniversalTime())).TotalSeconds;
+            unixTimestamp = (Int32)((DateTimeOffset)DateTime.Today.ToUniversalTime()).ToUnixTimeSeconds();
+
         }
 
         public List<ITicker> Tickers { get; private set; } = new List<ITicker>();
@@ -43,7 +47,7 @@ namespace SPOCSimulator.Simulation
         {
             return doneQueue;
         }
-            
+
 
         public void Add(ITicker ticker)
         {
@@ -54,42 +58,59 @@ namespace SPOCSimulator.Simulation
         {
             int ticksToSimulate = daysToSimulate * BoundaryConditions.DayLength;
             int lastDay = 0;
-            for(int tick = 0; tick < ticksToSimulate; tick++)
+            for (int tick = 0; tick < ticksToSimulate; tick++)
             {
-                
+
                 var day = tick / BoundaryConditions.DayLength;
-                if(day != lastDay)
+                if (day != lastDay)
                 {
                     LogEvent?.Invoke(string.Format("At day: {0}", day));
                     lastDay = day;
                 }
-                foreach(var ticker in Tickers.ToList() )
+                foreach (var ticker in Tickers.ToList())
                 {
                     ticker.Tick(day, tick);
-                    if(ticker.Destroyable())
+                    if (ticker.Destroyable())
                     {
                         Tickers.Remove(ticker);
                     }
                 }
                 if (tick % SimulationDatapointInterval == 0)
                 {
+
+
                     var activeEmployees = Tickers.Where(t => t.GetType() == typeof(EmployeeTicker)).Select(t => (EmployeeTicker)t).ToList();
-                    NewDatapoint?.Invoke(new SimulationDatapoint(marker, day, tick,
-                        primaryInputQueue.Count,
-                        firstToSecondQueue.Count,
-                        doneQueue.Count,
-                        activeEmployees.Count(t => t.WarmUp),
-                        activeEmployees.Count(t => t.CleanUp),
-                        activeEmployees.Count(t => t.CleanUp || t.WarmUp),
-                        activeEmployees.Count(t => t.Level == Models.SupportLevel.Level1st && t.Productive),
-                        activeEmployees.Count(t => t.Level == Models.SupportLevel.Level1st && !t.Productive),
-                        activeEmployees.Count(t => t.Level == Models.SupportLevel.Level2nd && t.Productive),
-                        activeEmployees.Count(t => t.Level == Models.SupportLevel.Level2nd && !t.Productive),
-                        plan.Tickets.Where(t => t.Started).Average(t => t.WaitingTime),
-                        plan.Tickets.Where(t => t.Solved).Average(t => t.Duration),
-                        plan.Tickets.Where(t => t.Solved && t.Difficulty == Models.SupportLevel.Level1st).Average(t => t.Duration),
-                        plan.Tickets.Where(t => t.Solved && t.Difficulty == Models.SupportLevel.Level2nd).Average(t => t.Duration),
-                        plan.Tickets.Where(t => t.Solved).Average(t => t.NumberOfStarts)));
+                    var startedTickets = plan.Tickets.Where(t => t.Started);
+                    var solvedTickets = plan.Tickets.Where(t => t.Solved);
+                    var solved1stLevel = solvedTickets.Where(t => t.Difficulty == Models.SupportLevel.Level1st);
+                    var solved2ndLevel = solvedTickets.Where(t => t.Difficulty == Models.SupportLevel.Level2nd);
+
+
+                    NewDatapoint?.Invoke(new SimulationDatapoint(marker,
+                                unixTimestamp + tick * 60,
+                                day, tick,
+                                plan.Tickets.Where(t => t.Deployed && !t.Solved).Count(),
+                                primaryInputQueue.Count,
+                                firstToSecondQueue.Count,
+                                doneQueue.Count,
+                                activeEmployees.Count(t => t.WarmUp),
+                                activeEmployees.Count(t => t.CleanUp),
+                                activeEmployees.Count(t => t.CleanUp || t.WarmUp),
+                                activeEmployees.Count(t => t.Level == Models.SupportLevel.Level1st && t.Productive),
+                                activeEmployees.Count(t => t.Level == Models.SupportLevel.Level1st && !t.Productive),
+                                activeEmployees.Count(t => t.Level == Models.SupportLevel.Level2nd && t.Productive),
+                                activeEmployees.Count(t => t.Level == Models.SupportLevel.Level2nd && !t.Productive),
+                                startedTickets.Any() ? startedTickets.Average(t => t.WaitingTime) : 0,
+                                solvedTickets.Any() ? solvedTickets.Average(t => t.Duration) : 0,
+                                solved1stLevel.Any() ? solved1stLevel.Average(t => t.Duration) : 0,
+                                solved2ndLevel.Any() ? solved2ndLevel.Average(t => t.Duration) : 0,
+                                solvedTickets.Any() ? solvedTickets.Average(t => t.NumberOfStarts) : 0,
+                                solved2ndLevel.Any() ? solvedTickets.Min(t => t.Duration) : 0,
+                                solved1stLevel.Any() ? solvedTickets.Min(t => t.Duration) : 0,
+                                startedTickets.Any() ? startedTickets.Min(t => t.WaitingTime) : 0,
+                                plan.Tickets.Where(t => t.Difficulty == Models.SupportLevel.Level1st && t.Started && !t.Solved).Count(),
+                                plan.Tickets.Where(t => t.Difficulty == Models.SupportLevel.Level1st && t.Started && !t.Solved).Count()
+                                ));
                 }
             }
         }

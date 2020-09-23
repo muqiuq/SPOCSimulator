@@ -32,7 +32,7 @@ namespace SPOCSimulator.Simulation.Ticker
             get
             {
                 if (startTicks == null || deployedTicks == null) return 0;
-                return (int)(deployedTicks - startTicks);
+                return (int)(startTicks - deployedTicks);
             }
         }
 

@@ -47,8 +47,13 @@ namespace SPOCSimulator.Simulation.Ticker
                 {
                     for(int a = 0; a < employeeTypeAndAmount.Value; a++)
                     {
-                        tickerManager.Add(new EmployeeTicker(ContinousEmployeeId, 
-                            primaryInputQueue, 
+                        TicketQueue primaryQueueForEmployee = primaryInputQueue;
+                        if(employeeTypeAndAmount.Key.Level == Models.SupportLevel.Level2nd)
+                        {
+                            primaryQueueForEmployee = firstToSecondLevelQueue;
+                        }
+                        tickerManager.Add(new EmployeeTicker(ContinousEmployeeId,
+                            primaryQueueForEmployee, 
                             doneQueue, 
                             firstToSecondLevelQueue, 
                             employeeTypeAndAmount.Key, 

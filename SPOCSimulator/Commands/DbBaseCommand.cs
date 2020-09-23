@@ -1,5 +1,7 @@
 ﻿using CommandLine;
 using MySql.Data.MySqlClient;
+using SPOCSimulator.Statistics;
+using SPOCSimulator.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,8 +15,11 @@ namespace SPOCSimulator.Commands
         [Option('h', "server", HelpText = "server host", Required = false, Default = "localhost")]
         public string Host { get; set; }
 
-        [Option('d', "db", HelpText = "db", Required = false, Default = "spocsim")]
+        [Option('d', "db", HelpText = "database to use", Required = false, Default = "spocsim")]
         public string Db { get; set; }
+
+        [Option("table", HelpText = "table to use", Required = false, Default = "datapoints")]
+        public string Table { get; set; }
 
         [Option('u', "username", HelpText = "mysql username", Required = false, Default = "root")]
         public string Username { get; set; }
@@ -41,6 +46,30 @@ namespace SPOCSimulator.Commands
             conn = new MySql.Data.MySqlClient.MySqlConnection(GetConnectionString());
             conn.Open();
             Print("Connected!");
+        }
+
+        protected void TruncateTable(string table)
+        {
+            var command = conn.CreateCommand();
+            command.CommandText = "TRUNCATE TABLE " + table +";";
+            var res = command.ExecuteNonQuery();
+            Print("Table truncated {0}", res);
+        }
+
+        protected void DropTable(string table, bool ifExists = false)
+        {
+            var command = conn.CreateCommand();
+            command.CommandText = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + table + "; ";
+            var res = command.ExecuteNonQuery();
+            Print("Table dropped {0}", res);
+        }
+
+        protected void CreateTable(string table)
+        {
+            var command = conn.CreateCommand();
+            command.CommandText = InternalMySqlHelper.GetCreateTable(table, typeof(SimulationDatapoint));
+            var res = command.ExecuteNonQuery();
+            Print("Table created {0}", res);
         }
 
     }

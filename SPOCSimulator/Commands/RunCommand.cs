@@ -1,9 +1,11 @@
 ﻿using CommandLine;
+using MySql.Data.MySqlClient;
 using SPOCSimulator.ContentManager;
 using SPOCSimulator.Generator;
 using SPOCSimulator.Simulation;
 using SPOCSimulator.Simulation.Ticker;
 using SPOCSimulator.Statistics;
+using SPOCSimulator.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +30,12 @@ namespace SPOCSimulator.Commands
 
         [Option("usedb", HelpText = "Use database to store datapoints")]
         public bool UseDatabase { get; set; }
+
+        [Option("truncate", HelpText = "Truncate table first")]
+        public bool TruncateFirst { get; set; }
+
+        [Option("dropfirst", HelpText = "Drop and create table first")]
+        public bool DropAndCreateFirst { get; set; }
 
         private List<SimulationDatapoint> datapoints = new List<SimulationDatapoint>();
 
@@ -56,29 +64,47 @@ namespace SPOCSimulator.Commands
             {
                 Days = ticketGenerationPlan.NumberOfDays;
                 Print("Found {0} days in ticket plan", Days);
-                
             }
-
-            
 
             SimulationManager sm = new SimulationManager("test",workshifts, ticketGenerationPlan, Days.Value);
 
             if(UseDatabase)
             {
                 sm.NewDatapoint += Sm_NewDatapoint;
+                if(DropAndCreateFirst)
+                {
+                    DropTable(Table, true);
+
+                    CreateTable(Table);
+                }
+                if(TruncateFirst)
+                {
+                    TruncateTable(Table);
+                }
             }
+
+            
 
 
             sm.LogEvent += Print;
 
             sm.Run();
 
-
-            Print("Inserting {} datapoints into db if connected", datapoints.Count);
-            if(datapoints.Count > 0)
+            if(UseDatabase)
             {
-                
+                Print("Inserting {0} datapoints into db if connected", datapoints.Count);
+                int inserts = 0;
+                if (datapoints.Count > 0)
+                {
+                    /*foreach (var datapoint in datapoints)
+                    {
+                        inserts += InternalMySqlHelper.GetInsert(conn, "datapoints", datapoint).ExecuteNonQuery();
+                    }*/
+                    inserts += InternalMySqlHelper.GetBulkInsert(conn, "datapoints", datapoints.ToArray()).ExecuteNonQuery();
+                }
+                Print("Inserts: {0}", inserts);
             }
+            
 
             List<TicketEntity> tickets = ticketGenerationPlan.Tickets;
 
