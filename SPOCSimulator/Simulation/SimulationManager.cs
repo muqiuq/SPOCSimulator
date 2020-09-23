@@ -19,8 +19,9 @@ namespace SPOCSimulator.Simulation
         private TicketQueue doneQueue = new TicketQueue();
         private TicketQueue firstToSecondQueue = new TicketQueue();
         private int unixTimestamp;
+        public Accounting Accounting { get; private set; } = new Accounting();
 
-        public int SimulationDatapointInterval { get; set; } = 10;
+        public int SimulationDatapointInterval { get; set; } = 5;
 
         public delegate void LogDelegate(string text);
         public event LogDelegate LogEvent;
@@ -34,11 +35,10 @@ namespace SPOCSimulator.Simulation
             this.workshiftsCM = workshiftsCM;
             this.plan = plan;
             this.daysToSimulate = daysToSimulate;
-            Add(new ShiftManagerTicker(this, workshiftsCM, primaryInputQueue, doneQueue, firstToSecondQueue));
+            Add(new ShiftManagerTicker(this, workshiftsCM, primaryInputQueue, doneQueue, firstToSecondQueue, Accounting));
             Add(new NewTicketTicker(plan, primaryInputQueue));
             //unixTimestamp = (Int32)(DateTime.Today.Subtract(new DateTime(1970, 1, 1).ToUniversalTime())).TotalSeconds;
             unixTimestamp = (Int32)((DateTimeOffset)DateTime.Today.ToUniversalTime()).ToUnixTimeSeconds();
-
         }
 
         public List<ITicker> Tickers { get; private set; } = new List<ITicker>();
@@ -77,14 +77,11 @@ namespace SPOCSimulator.Simulation
                 }
                 if (tick % SimulationDatapointInterval == 0)
                 {
-
-
                     var activeEmployees = Tickers.Where(t => t.GetType() == typeof(EmployeeTicker)).Select(t => (EmployeeTicker)t).ToList();
                     var startedTickets = plan.Tickets.Where(t => t.Started);
                     var solvedTickets = plan.Tickets.Where(t => t.Solved);
                     var solved1stLevel = solvedTickets.Where(t => t.Difficulty == Models.SupportLevel.Level1st);
                     var solved2ndLevel = solvedTickets.Where(t => t.Difficulty == Models.SupportLevel.Level2nd);
-
 
                     NewDatapoint?.Invoke(new SimulationDatapoint(marker,
                                 unixTimestamp + tick * 60,

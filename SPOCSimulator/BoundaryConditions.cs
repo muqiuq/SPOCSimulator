@@ -22,5 +22,10 @@ namespace SPOCSimulator
         // Factor of 2 would mean 50% 1st, 50% 2nd, 1.5 is 70% 1st
         public static double LevelDistributionFactor = 1.5;
 
+        public static int EmployeeEfficencyDecayStartTicks = 360;
+        public static int EmployeeEfficencyDecayInterval = 15;
+        public static double EmployeeEfficencyDecayStartValue = 0.01;
+        public static double EmployeeEfficencyDecayFactor = 1.2;
+
     }
 }

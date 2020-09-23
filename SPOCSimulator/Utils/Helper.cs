@@ -8,6 +8,7 @@ namespace SPOCSimulator.Utils
     public class Helper
     {
 
+
         public static bool DiffersFromThreshold(int threshold, params bool[] bools)
         { 
             return new List<bool>(bools).Count(b => b) != threshold; 

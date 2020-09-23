@@ -16,19 +16,21 @@ namespace SPOCSimulator.Simulation.Ticker
         private TicketQueue firstToSecondLevelQueue;
 
         private int ContinousEmployeeId = 0;
+        private Accounting accounting;
 
         public ShiftManagerTicker(
-            ITickerManager tickerManager, 
+            ITickerManager tickerManager,
             WorkshiftsCM workshiftsCM,
             TicketQueue primaryInputQueue,
             TicketQueue doneQueue,
-            TicketQueue firstToSecondLevelQueue)
+            TicketQueue firstToSecondLevelQueue, Accounting accounting)
         {
             this.workshiftsCM = workshiftsCM;
             this.tickerManager = tickerManager;
             this.primaryInputQueue = primaryInputQueue;
             this.doneQueue = doneQueue;
             this.firstToSecondLevelQueue = firstToSecondLevelQueue;
+            this.accounting = accounting;
         }
 
         public bool Destroyable()
@@ -57,7 +59,8 @@ namespace SPOCSimulator.Simulation.Ticker
                             doneQueue, 
                             firstToSecondLevelQueue, 
                             employeeTypeAndAmount.Key, 
-                            day * BoundaryConditions.DayLength +  startingShift.End));
+                            day * BoundaryConditions.DayLength +  startingShift.End,
+                            accounting));
 
                         ContinousEmployeeId++;
                     }

@@ -1,5 +1,7 @@
-﻿using SPOCSimulator.Models;
+﻿using Org.BouncyCastle.Security;
+using SPOCSimulator.Models;
 using SPOCSimulator.Simulation.Ticker.Helper;
+using SPOCSimulator.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,6 +24,9 @@ namespace SPOCSimulator.Simulation.Ticker
 
         private EmployeeTickerState employeeTickerState;
 
+        private EquallyDistributedNumber equallyDistributedNumber = new EquallyDistributedNumber(1, 100);
+
+        private double EfficencyDecayValue = BoundaryConditions.EmployeeEfficencyDecayStartValue;
 
         public bool HasTicket
         {
@@ -35,9 +40,11 @@ namespace SPOCSimulator.Simulation.Ticker
         private int workedTicks = 0;
 
         private int doneTickets = 0;
-        
 
-        public EmployeeTicker(int id, TicketQueue inputQueue, TicketQueue doneOutputQueue, TicketQueue escalateOutputQueue, EmployeeType employeeType, int shiftEnd)
+        private Accounting accounting;
+
+
+        public EmployeeTicker(int id, TicketQueue inputQueue, TicketQueue doneOutputQueue, TicketQueue escalateOutputQueue, EmployeeType employeeType, int shiftEnd, Accounting accounting)
         {
             this.id = id;
             this.inputQueue = inputQueue;
@@ -47,7 +54,8 @@ namespace SPOCSimulator.Simulation.Ticker
             this.shiftEnd = shiftEnd;
 
             employeeTickerState = EmployeeTickerState.WarmUp;
-            ticksToFinish = BoundaryConditions.EmployeeWarmUpDuration;
+            ticksToFinish = (int)(BoundaryConditions.EmployeeWarmUpDuration * employeeType.DurationFactor);
+            this.accounting = accounting;
         }
 
 
@@ -93,6 +101,13 @@ namespace SPOCSimulator.Simulation.Ticker
 
         public void Tick(int day, int ticks)
         {
+            if(workedTicks > BoundaryConditions.EmployeeEfficencyDecayStartTicks)
+            {
+                if(workedTicks % BoundaryConditions.EmployeeEfficencyDecayInterval == 0)
+                {
+                    EfficencyDecayValue = EfficencyDecayValue * BoundaryConditions.EmployeeEfficencyDecayFactor;
+                }
+            }
             if (employeeTickerState == EmployeeTickerState.WarmUp)
             {
                 
@@ -114,14 +129,23 @@ namespace SPOCSimulator.Simulation.Ticker
                         Console.WriteLine(string.Format("{0} > ID {1} [{2}] shifts done after {3}", ticks, id, employeeType.Level, workedTicks));
                         // Shift done go into cleanup
                         employeeTickerState = EmployeeTickerState.CleanUp;
-                        ticksToFinish = BoundaryConditions.EmployeeCleanUpDuration;
+                        ticksToFinish = (int)(BoundaryConditions.EmployeeCleanUpDuration * employeeType.DurationFactor);
                     }
                     else
                     {
                         // No ticket? Get a new one!
                         currentTicket = inputQueue.Dequeue();
                         if (!HasTicket) return;
-                        ticksToFinish = currentTicket.TicksToSolve(employeeType.Level);
+
+                        ticksToFinish = (int)(currentTicket.TicksToSolve(employeeType.Level) * employeeType.DurationFactor);
+                        var oldTicksToFinish = ticksToFinish;
+                        if (workedTicks > BoundaryConditions.EmployeeEfficencyDecayStartTicks)
+                        {
+                            ticksToFinish = (int)(ticksToFinish * (1d + EfficencyDecayValue));
+                        }
+                        ticksToFinish = (int)Math.Min((currentTicket.TicksToSolve(employeeType.Level) * 3), ticksToFinish);
+                        // Dirty security hack in case of over/underflow
+                        if (oldTicksToFinish > ticksToFinish) ticksToFinish = oldTicksToFinish;
                         currentTicket.StartSolving(ticks);
                         Console.WriteLine(string.Format("{0} > ID {1} [{2}] Getting new ticket ({3})", ticks, id, employeeType.Level, workedTicks, ticksToFinish));
                     }
@@ -133,7 +157,13 @@ namespace SPOCSimulator.Simulation.Ticker
                 else
                 {
                     doneTickets++;
-                    if (currentTicket.MoreDifficultyThen(employeeType.Level))
+                    if(equallyDistributedNumber.Next() > (employeeType.SuccessRate * 100))
+                    {
+                        Console.WriteLine(string.Format("{0} > ID {1} [{2}] failed to solve ticket ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
+                        currentTicket.StopSolving(ticks);
+                        inputQueue.Enqueue(currentTicket);
+                    }
+                    else if (currentTicket.MoreDifficultyThen(employeeType.Level))
                     {
                         if (employeeType.Level == SupportLevel.Level2nd) Debugger.Break();
                         currentTicket.StopSolving(ticks);
@@ -156,6 +186,7 @@ namespace SPOCSimulator.Simulation.Ticker
                 if (ticksToFinish <= 0)
                 {
                     Console.WriteLine(string.Format("{0} > ID {1} [{2}] Going home after {3} and doing {4} tickets", ticks, id, employeeType.Level, workedTicks, doneTickets));
+                    accounting.Book(employeeType.HourlyWage, ticks);
                     employeeTickerState = EmployeeTickerState.Done;
                 }
             }

@@ -18,8 +18,8 @@ namespace SPOCSimulator.Commands
         [Option('d', "db", HelpText = "database to use", Required = false, Default = "spocsim")]
         public string Db { get; set; }
 
-        [Option("table", HelpText = "table to use", Required = false, Default = "datapoints")]
-        public string Table { get; set; }
+        [Option("tableprefix", HelpText = "table prefix", Required = false, Default = "")]
+        public string TablePrefix { get; set; }
 
         [Option('u', "username", HelpText = "mysql username", Required = false, Default = "root")]
         public string Username { get; set; }
@@ -43,6 +43,7 @@ namespace SPOCSimulator.Commands
 
         protected void ConnectDb()
         {
+            Print("Connecting...");
             conn = new MySql.Data.MySqlClient.MySqlConnection(GetConnectionString());
             conn.Open();
             Print("Connected!");
@@ -64,13 +65,30 @@ namespace SPOCSimulator.Commands
             Print("Table dropped {0}", res);
         }
 
-        protected void CreateTable(string table)
+        protected void CreateTable(string table, Type type)
         {
             var command = conn.CreateCommand();
-            command.CommandText = InternalMySqlHelper.GetCreateTable(table, typeof(SimulationDatapoint));
+            command.CommandText = InternalMySqlHelper.GetCreateTable(table, type);
             var res = command.ExecuteNonQuery();
             Print("Table created {0}", res);
         }
 
+        protected void CreateTables()
+        {
+            CreateTable(TablePrefix + Statics.TableDatapoints, typeof(SimulationDatapoint));
+            CreateTable(TablePrefix + Statics.TableSummaries, typeof(SimulationSummary));
+        }
+
+        protected void TruncateTables()
+        {
+            TruncateTable(TablePrefix + Statics.TableDatapoints);
+            TruncateTable(TablePrefix + Statics.TableSummaries);
+        }
+
+        protected void DropTables(bool ifExists = false)
+        {
+            DropTable(TablePrefix + Statics.TableDatapoints, ifExists);
+            DropTable(TablePrefix + Statics.TableSummaries, ifExists);
+        }
     }
 }

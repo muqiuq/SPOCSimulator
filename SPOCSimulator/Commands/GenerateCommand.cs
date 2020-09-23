@@ -56,7 +56,7 @@ namespace SPOCSimulator.Commands
             int ticketNumber = 0;
             int ticks = 0;
 
-            var gSupportLevel = new Normal(1.5, 1);
+            var gSupportLevel = new Normal(BoundaryConditions.LevelDistributionFactor, 1);
 
             TicketGenerationPlan tge = new TicketGenerationPlan();
 
@@ -105,8 +105,8 @@ namespace SPOCSimulator.Commands
         public Dictionary<SupportLevel, int> GetLevelDifficulties()
         {
             Dictionary<SupportLevel, int> difficultyToSolveDurationMin = new Dictionary<SupportLevel, int>() {
-                { SupportLevel.Level1st, (int)Math.Abs(g1stLevelDuration.Sample())},
-                { SupportLevel.Level2nd, (int)Math.Abs(g2ndLevelDuration.Sample())},
+                { SupportLevel.Level1st, Math.Max(2,(int)Math.Abs(g1stLevelDuration.Sample()))},
+                { SupportLevel.Level2nd, Math.Max(2,(int)Math.Abs(g2ndLevelDuration.Sample()))},
             };
 
             return difficultyToSolveDurationMin;

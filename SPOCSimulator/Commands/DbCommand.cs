@@ -42,15 +42,15 @@ namespace SPOCSimulator.Commands
 
             if(DoCreateTable)
             {
-                CreateTable(Table);
+                CreateTables();
             }
             if(DoDropTable)
             {
-                DropTable(Table);
+                DropTables();
             }
             if(DoTruncateTable)
             {
-                TruncateTable(Table);
+                TruncateTables();
             }
 
             return 0;
