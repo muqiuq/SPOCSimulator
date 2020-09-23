@@ -1,6 +1,7 @@
 ﻿using SPOCSimulator.ContentManager;
 using SPOCSimulator.Generator;
 using SPOCSimulator.Simulation.Ticker;
+using SPOCSimulator.Statistics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace SPOCSimulator.Simulation
 {
     public class SimulationManager : ITickerManager
     {
+        private readonly string marker;
         private WorkshiftsCM workshiftsCM;
         private TicketGenerationPlan plan;
         private readonly int daysToSimulate;
@@ -17,11 +19,17 @@ namespace SPOCSimulator.Simulation
         private TicketQueue doneQueue = new TicketQueue();
         private TicketQueue firstToSecondQueue = new TicketQueue();
 
+        public int SimulationDatapointInterval { get; set; } = 30;
+
         public delegate void LogDelegate(string text);
         public event LogDelegate LogEvent;
 
-        public SimulationManager(WorkshiftsCM workshiftsCM, TicketGenerationPlan plan, int daysToSimulate)
+        public delegate void NewDatapointDelegate(SimulationDatapoint point);
+        public event NewDatapointDelegate NewDatapoint;
+
+        public SimulationManager(string marker, WorkshiftsCM workshiftsCM, TicketGenerationPlan plan, int daysToSimulate)
         {
+            this.marker = marker;
             this.workshiftsCM = workshiftsCM;
             this.plan = plan;
             this.daysToSimulate = daysToSimulate;
@@ -48,6 +56,7 @@ namespace SPOCSimulator.Simulation
             int lastDay = 0;
             for(int tick = 0; tick < ticksToSimulate; tick++)
             {
+                
                 var day = tick / BoundaryConditions.DayLength;
                 if(day != lastDay)
                 {
@@ -61,6 +70,26 @@ namespace SPOCSimulator.Simulation
                     {
                         Tickers.Remove(ticker);
                     }
+                }
+                if (tick % SimulationDatapointInterval == 0)
+                {
+                    var activeEmployees = Tickers.Where(t => t.GetType() == typeof(EmployeeTicker)).Select(t => (EmployeeTicker)t).ToList();
+                    NewDatapoint?.Invoke(new SimulationDatapoint(marker, day, tick,
+                        primaryInputQueue.Count,
+                        firstToSecondQueue.Count,
+                        doneQueue.Count,
+                        activeEmployees.Count(t => t.WarmUp),
+                        activeEmployees.Count(t => t.CleanUp),
+                        activeEmployees.Count(t => t.CleanUp || t.WarmUp),
+                        activeEmployees.Count(t => t.Level == Models.SupportLevel.Level1st && t.Productive),
+                        activeEmployees.Count(t => t.Level == Models.SupportLevel.Level1st && !t.Productive),
+                        activeEmployees.Count(t => t.Level == Models.SupportLevel.Level2nd && t.Productive),
+                        activeEmployees.Count(t => t.Level == Models.SupportLevel.Level2nd && !t.Productive),
+                        plan.Tickets.Where(t => t.Started).Average(t => t.WaitingTime),
+                        plan.Tickets.Where(t => t.Solved).Average(t => t.Duration),
+                        plan.Tickets.Where(t => t.Solved && t.Difficulty == Models.SupportLevel.Level1st).Average(t => t.Duration),
+                        plan.Tickets.Where(t => t.Solved && t.Difficulty == Models.SupportLevel.Level2nd).Average(t => t.Duration),
+                        plan.Tickets.Where(t => t.Solved).Average(t => t.NumberOfStarts)));
                 }
             }
         }

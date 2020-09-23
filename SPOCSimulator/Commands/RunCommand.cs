@@ -3,6 +3,7 @@ using SPOCSimulator.ContentManager;
 using SPOCSimulator.Generator;
 using SPOCSimulator.Simulation;
 using SPOCSimulator.Simulation.Ticker;
+using SPOCSimulator.Statistics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ using System.Text;
 namespace SPOCSimulator.Commands
 {
     [Verb("run", HelpText = "Run simulation")]
-    public class RunCommand : BaseCommand, ICommandVerb
+    public class RunCommand : DbBaseCommand, ICommandVerb
     {
         [Option('e', "employeetypes", HelpText = "path to employee types json file", Required = true)]
         public string EmployeeTypesFilename { get; set; }
@@ -25,8 +26,19 @@ namespace SPOCSimulator.Commands
         [Option('t', "tickets", HelpText = "path to ticket generation plan file", Required = true)]
         public string TicketGenerationPlan { get; set; }
 
+        [Option("usedb", HelpText = "Use database to store datapoints")]
+        public bool UseDatabase { get; set; }
+
+        private List<SimulationDatapoint> datapoints = new List<SimulationDatapoint>();
+
         public int Run()
         {
+
+            if(UseDatabase)
+            {
+                ConnectDb();
+            }
+
             EmployeeTypesCM employeeTypesCM = new EmployeeTypesCM();
             employeeTypesCM.Load(EmployeeTypesFilename);
 
@@ -47,11 +59,26 @@ namespace SPOCSimulator.Commands
                 
             }
 
-            SimulationManager sm = new SimulationManager(workshifts, ticketGenerationPlan, Days.Value);
+            
+
+            SimulationManager sm = new SimulationManager("test",workshifts, ticketGenerationPlan, Days.Value);
+
+            if(UseDatabase)
+            {
+                sm.NewDatapoint += Sm_NewDatapoint;
+            }
+
 
             sm.LogEvent += Print;
 
             sm.Run();
+
+
+            Print("Inserting {} datapoints into db if connected", datapoints.Count);
+            if(datapoints.Count > 0)
+            {
+                
+            }
 
             List<TicketEntity> tickets = ticketGenerationPlan.Tickets;
 
@@ -63,6 +90,11 @@ namespace SPOCSimulator.Commands
             Print("Average Duration: {0} ", tickets.Where(t => t.Solved).Average(i => i.Duration));
 
             return 0;
+        }
+
+        private void Sm_NewDatapoint(SimulationDatapoint point)
+        {
+            datapoints.Add(point);
         }
     }
 }

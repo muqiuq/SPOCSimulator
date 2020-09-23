@@ -67,6 +67,29 @@ namespace SPOCSimulator.Simulation.Ticker
             }
         }
 
+        public bool WarmUp
+        {
+            get
+            {
+                return employeeTickerState == EmployeeTickerState.WarmUp;
+            }
+        }
+
+        public bool CleanUp
+        {
+            get
+            {
+                return employeeTickerState == EmployeeTickerState.CleanUp;
+            }
+        }
+
+        public SupportLevel Level
+        {
+            get
+            {
+                return employeeType.Level;
+            }
+        }
 
         public void Tick(int day, int ticks)
         {
