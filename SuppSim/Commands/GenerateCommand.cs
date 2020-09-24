@@ -30,6 +30,8 @@ namespace SPOCSimulator.Commands
 
         public int Run()
         {
+            init();
+
             var distributioGenerator = new TicketsPerDayDistributionGenerator();
             distributioGenerator.Load(TicketsPerDayDistributionFileName);
 

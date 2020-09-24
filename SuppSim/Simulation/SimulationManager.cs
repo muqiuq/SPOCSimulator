@@ -12,6 +12,7 @@ namespace SPOCSimulator.Simulation
     public class SimulationManager : ITickerManager
     {
         private readonly string marker;
+        private readonly int run;
         private WorkshiftsCM workshiftsCM;
         private TicketGenerationPlan plan;
         private readonly int daysToSimulate;
@@ -28,9 +29,10 @@ namespace SPOCSimulator.Simulation
         public delegate void NewDatapointDelegate(SimulationDatapoint point);
         public event NewDatapointDelegate NewDatapoint;
 
-        public SimulationManager(string marker, WorkshiftsCM workshiftsCM, TicketGenerationPlan plan, int daysToSimulate)
+        public SimulationManager(string marker, int run, WorkshiftsCM workshiftsCM, TicketGenerationPlan plan, int daysToSimulate)
         {
             this.marker = marker;
+            this.run = run;
             this.workshiftsCM = workshiftsCM;
             this.plan = plan;
             this.daysToSimulate = daysToSimulate;
@@ -83,6 +85,7 @@ namespace SPOCSimulator.Simulation
                     var solved2ndLevel = solvedTickets.Where(t => t.Difficulty == Models.SupportLevel.Level2nd);
 
                     NewDatapoint?.Invoke(new SimulationDatapoint(marker,
+                                run,
                                 unixTimestamp + tick * 60,
                                 day, tick,
                                 plan.Tickets.Where(t => t.Deployed && !t.Solved).Count(),

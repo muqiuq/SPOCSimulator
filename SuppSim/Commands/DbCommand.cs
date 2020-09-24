@@ -21,18 +21,21 @@ namespace SPOCSimulator.Commands
         [Option("testconn", HelpText = "Test Connection")]
         public bool DoTestConnection { get; set; }
 
-        [Option("createtable", HelpText = "Create Datapoint table")]
+        [Option("createtables", HelpText = "Create Datapoint table")]
         public bool DoCreateTable { get; set; }
 
-        [Option("droptable", HelpText = "Drop Datapoint table")]
+        [Option("droptables", HelpText = "Drop Datapoint table")]
         public bool DoDropTable { get; set; }
 
-        [Option("truncatetable", HelpText = "Drop Datapoint table")]
+        [Option("truncatetables", HelpText = "Drop Datapoint table")]
         public bool DoTruncateTable { get; set; }
+
+        [Option("dropcreate", HelpText = "Drop first (if exists) and create tables")]
+        public bool DoDropCreate { get; set; }
 
         public int Run()
         {
-            if (Helper.DiffersFromThreshold(1, DoTestConnection, DoCreateTable, DoDropTable, DoTruncateTable))
+            if (Helper.DiffersFromThreshold(1, DoTestConnection, DoCreateTable, DoDropTable, DoTruncateTable, DoDropCreate))
             {
                 Print("You may only select one function!");
                 return 1;
@@ -51,6 +54,11 @@ namespace SPOCSimulator.Commands
             if(DoTruncateTable)
             {
                 TruncateTables();
+            }
+            if(DoDropCreate)
+            {
+                DropTables(true);
+                CreateTables();
             }
 
             return 0;

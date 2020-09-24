@@ -1,0 +1,26 @@
+[
+  {
+    "EmployeeTypeNames": {
+      "Susanne": 7,
+      "Peter": 7
+    },
+    "ShiftBegin": "06:00",
+    "ShiftEnd": "14:15"
+  },
+  {
+    "EmployeeTypeNames": {
+      "Susanne": 7,
+      "Peter": 7
+    },
+    "ShiftBegin": "14:00",
+    "ShiftEnd": "18:15"
+  },
+  {
+    "EmployeeTypeNames": {
+      "Susanne": 1,
+      "Peter": 1
+    },
+    "ShiftBegin": "18:15",
+    "ShiftEnd": "21:00"
+  }
+]

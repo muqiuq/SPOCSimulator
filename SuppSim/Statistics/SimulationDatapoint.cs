@@ -7,6 +7,7 @@ namespace SPOCSimulator.Statistics
     public class SimulationDatapoint
     {
         public readonly string Marker;
+        public readonly int Run;
         public readonly int Day;
         public readonly int Tick;
         public readonly long Time;
@@ -35,6 +36,7 @@ namespace SPOCSimulator.Statistics
 
         public SimulationDatapoint(
             string marker,
+            int run,
             long time,
             int day,
             int tick,
@@ -56,6 +58,7 @@ namespace SPOCSimulator.Statistics
             double averageNumberOfStarts, double minSolveTime2ndLevel, double minSolveTime1stLevel, double minWaitTime, int ongoing1stLevelTickets, int ongoing2ndLevelTickets)
         {
             Marker = marker;
+            Run = run;
             Day = day;
             Tick = tick;
             Time = time;

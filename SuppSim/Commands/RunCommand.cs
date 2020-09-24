@@ -28,14 +28,17 @@ namespace SPOCSimulator.Commands
         [Option('t', "tickets", HelpText = "path to ticket generation plan file", Required = true)]
         public string TicketGenerationPlan { get; set; }
 
-        [Option("usedb", HelpText = "Use database to store datapoints")]
+        [Option("usedb", HelpText = "Use database to store datapoints", Default = false)]
         public bool UseDatabase { get; set; }
 
-        [Option("truncate", HelpText = "Truncate table first")]
+        [Option("truncate", HelpText = "Truncate table first", Default = false)]
         public bool TruncateFirst { get; set; }
 
-        [Option("dropfirst", HelpText = "Drop and create table first")]
+        [Option("dropfirst", HelpText = "Drop and create table first", Default = false)]
         public bool DropAndCreateFirst { get; set; }
+
+        [Option("clearmarker", HelpText = "Clear datapoints and summaries for marker", Default = false)]
+        public bool ClearTablesForMarker { get; set; }
 
         [Option('n', "Name", HelpText = "Name (Tag) for the current run.", Required = true)]
         public string Name { get; set; }
@@ -44,6 +47,7 @@ namespace SPOCSimulator.Commands
 
         public int Run()
         {
+            init();
 
             if(UseDatabase)
             {
@@ -69,13 +73,11 @@ namespace SPOCSimulator.Commands
                 Print("Found {0} days in ticket plan", Days);
             }
 
-            
-
-            SimulationManager sm = new SimulationManager(Name,workshifts, ticketGenerationPlan, Days.Value);
+            int run = 0;
 
             if(UseDatabase)
             {
-                sm.NewDatapoint += Sm_NewDatapoint;
+                
                 if(DropAndCreateFirst)
                 {
                     DropTables(true);
@@ -86,6 +88,33 @@ namespace SPOCSimulator.Commands
                 {
                     TruncateTables();
                 }
+
+                if (ClearTablesForMarker)
+                {
+                    var oldDatapointsDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", Statics.TableDatapoints), conn);
+                    oldDatapointsDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
+                    Print("Deleted old datapoints (if exists) ({0})", oldDatapointsDeleteCommand.ExecuteNonQuery());
+
+                    var oldSummaryDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", Statics.TableSummaries), conn);
+                    oldSummaryDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
+                    Print("Deleted old summary (if exists) ({0})", oldSummaryDeleteCommand.ExecuteNonQuery());
+                }
+
+                var getRunNumberCmd = new MySqlCommand(string.Format("select ifnull(min(run),0) as min from datapoints where marker=@Marker", Statics.TableSummaries), conn);
+                getRunNumberCmd.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
+                using (var getRunNumberCmdReader = getRunNumberCmd.ExecuteReader())
+                {
+                    getRunNumberCmdReader.Read();
+                    run = getRunNumberCmdReader.GetInt32("min") + 1;
+                }
+                Print("Run number {0}", run);
+            }
+
+            SimulationManager sm = new SimulationManager(Name, run, workshifts, ticketGenerationPlan, Days.Value);
+
+            if(UseDatabase)
+            {
+                sm.NewDatapoint += Sm_NewDatapoint;
             }
 
             sm.LogEvent += Print;
@@ -93,13 +122,8 @@ namespace SPOCSimulator.Commands
             sm.Run();
 
 
-
             if (UseDatabase)
             {
-                var oldDatapointsDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", Statics.TableDatapoints), conn);
-                oldDatapointsDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
-                Print("Deleted old datapoints (if exists) ({0})", oldDatapointsDeleteCommand.ExecuteNonQuery());
-
                 Print("Inserting {0} datapoints into db if connected", datapoints.Count);
                 int inserts = 0;
                 if (datapoints.Count > 0)
@@ -114,6 +138,7 @@ namespace SPOCSimulator.Commands
 
             SimulationSummary ss = new SimulationSummary(
                 Name,
+                run,
                 tickets.Where(t => t.Solved).Count(),
                 tickets.Where(t => t.Deployed).Count(),
                 tickets.Where(t => t.Started).Count(),
@@ -123,15 +148,12 @@ namespace SPOCSimulator.Commands
                 tickets.Where(t => t.Solved).Any() ? tickets.Where(t => t.Solved).Average(i => i.Duration) : 0,
                 sm.Accounting.TotalExpenses,
                 sm.Accounting.TotalWorkingHours,
-                sm.Accounting.TotalWorkingHours != 0? sm.Accounting.TotalExpenses / sm.Accounting.TotalWorkingHours : 0
+                sm.Accounting.TotalWorkingHours != 0? sm.Accounting.TotalExpenses / sm.Accounting.TotalWorkingHours : 0,
+                tickets.Where(t => !t.Solved).Count()
                 );
 
             if(UseDatabase)
             {
-                var oldSummaryDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", Statics.TableSummaries), conn);
-                oldSummaryDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
-                Print("Deleted old summary (if exists) ({0})", oldSummaryDeleteCommand.ExecuteNonQuery());
-
                 var summaryInsert = InternalMySqlHelper.GetInsert(conn, TablePrefix + Statics.TableSummaries, ss);
                 Print("Insert summary ({0})", summaryInsert.ExecuteNonQuery());
             }

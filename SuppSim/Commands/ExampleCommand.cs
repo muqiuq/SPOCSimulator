@@ -1,8 +1,10 @@
 ﻿using CommandLine;
+using Newtonsoft.Json;
 using SPOCSimulator.Generator;
 using SPOCSimulator.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace SPOCSimulator.Commands
@@ -20,12 +22,15 @@ namespace SPOCSimulator.Commands
         [Option('w', "workshifts", HelpText = "Workshifts example file")]
         public bool GenerateWorkshifts { get; set; }
 
+        [Option('b', "boundary", HelpText = "write boundary conditions")]
+        public bool BoundaryConditions { get; set; }
+
         [Option('o', "output", HelpText = "Output filename", Default = "example.json")]
         public string Filename { get; set; }
 
         public int Run()
         {
-            if(Helper.DiffersFromThreshold(1, GenerateEmployeeType, GenerateTicketsPerDayDistribution, GenerateWorkshifts))
+            if(Helper.DiffersFromThreshold(1, GenerateEmployeeType, GenerateTicketsPerDayDistribution, GenerateWorkshifts, BoundaryConditions))
             {
                 Print("You may only select one generator function!");
                 return 1;
@@ -48,6 +53,11 @@ namespace SPOCSimulator.Commands
                 var ws = ExampleGenerator.GetWorkshifts();
                 ws.Save(Filename);
                 Print("Saved workshifts example files to " + Filename);
+            }
+            if(BoundaryConditions)
+            {
+                var json = JsonConvert.SerializeObject(new BoundaryConditions(), Formatting.Indented);
+                File.WriteAllText(Filename, json);
             }
 
             return 0;

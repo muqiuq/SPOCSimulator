@@ -2,15 +2,15 @@
   {
     "Name": "Susanne",
     "Level": 1,
-    "HourlyWage": 10,
+    "HourlyWage": 30,
     "SuccessRate": 1,
     "DurationFactor": 1
   },
   {
     "Name": "Peter",
     "Level": 2,
-    "HourlyWage": 20,
-    "SuccessRate": 1,
+    "HourlyWage": 45,
+    "SuccessRate": 0.9,
     "DurationFactor": 1
   }
 ]
