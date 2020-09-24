@@ -15,9 +15,8 @@ namespace SPOCSimulator.Simulation
         private WorkshiftsCM workshiftsCM;
         private TicketGenerationPlan plan;
         private readonly int daysToSimulate;
-        private TicketQueue primaryInputQueue = new TicketQueue();
+        private MultiLevelTicketQueue inputQueue = new MultiLevelTicketQueue();
         private TicketQueue doneQueue = new TicketQueue();
-        private TicketQueue firstToSecondQueue = new TicketQueue();
         private int unixTimestamp;
         public Accounting Accounting { get; private set; } = new Accounting();
 
@@ -35,8 +34,8 @@ namespace SPOCSimulator.Simulation
             this.workshiftsCM = workshiftsCM;
             this.plan = plan;
             this.daysToSimulate = daysToSimulate;
-            Add(new ShiftManagerTicker(this, workshiftsCM, primaryInputQueue, doneQueue, firstToSecondQueue, Accounting));
-            Add(new NewTicketTicker(plan, primaryInputQueue));
+            Add(new ShiftManagerTicker(this, workshiftsCM, inputQueue, doneQueue, Accounting));
+            Add(new NewTicketTicker(plan, inputQueue));
             //unixTimestamp = (Int32)(DateTime.Today.Subtract(new DateTime(1970, 1, 1).ToUniversalTime())).TotalSeconds;
             unixTimestamp = (Int32)((DateTimeOffset)DateTime.Today.ToUniversalTime()).ToUnixTimeSeconds();
         }
@@ -87,8 +86,8 @@ namespace SPOCSimulator.Simulation
                                 unixTimestamp + tick * 60,
                                 day, tick,
                                 plan.Tickets.Where(t => t.Deployed && !t.Solved).Count(),
-                                primaryInputQueue.Count,
-                                firstToSecondQueue.Count,
+                                inputQueue.Count(Models.SupportLevel.Level1st),
+                                inputQueue.Count(Models.SupportLevel.Level2nd),
                                 doneQueue.Count,
                                 activeEmployees.Count(t => t.WarmUp),
                                 activeEmployees.Count(t => t.CleanUp),

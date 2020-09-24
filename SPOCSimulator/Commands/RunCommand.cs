@@ -92,8 +92,14 @@ namespace SPOCSimulator.Commands
 
             sm.Run();
 
-            if(UseDatabase)
+
+
+            if (UseDatabase)
             {
+                var oldDatapointsDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", Statics.TableDatapoints), conn);
+                oldDatapointsDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
+                Print("Deleted old datapoints (if exists) ({0})", oldDatapointsDeleteCommand.ExecuteNonQuery());
+
                 Print("Inserting {0} datapoints into db if connected", datapoints.Count);
                 int inserts = 0;
                 if (datapoints.Count > 0)
@@ -114,18 +120,21 @@ namespace SPOCSimulator.Commands
                 tickets.Count(),
                 tickets.Where(t => !t.Solved && t.Difficulty == Models.SupportLevel.Level1st).Count(),
                 tickets.Where(t => !t.Solved && t.Difficulty == Models.SupportLevel.Level2nd).Count(),
-                tickets.Where(t => t.Solved).Average(i => i.Duration),
+                tickets.Where(t => t.Solved).Any() ? tickets.Where(t => t.Solved).Average(i => i.Duration) : 0,
                 sm.Accounting.TotalExpenses,
                 sm.Accounting.TotalWorkingHours,
-                sm.Accounting.TotalExpenses / sm.Accounting.TotalWorkingHours
+                sm.Accounting.TotalWorkingHours != 0? sm.Accounting.TotalExpenses / sm.Accounting.TotalWorkingHours : 0
                 );
 
-            var oldSummaryDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker",Statics.TableSummaries), conn);
-            oldSummaryDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
-            Print("Deleted old summary (if exists) ({0})", oldSummaryDeleteCommand.ExecuteNonQuery());
+            if(UseDatabase)
+            {
+                var oldSummaryDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", Statics.TableSummaries), conn);
+                oldSummaryDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
+                Print("Deleted old summary (if exists) ({0})", oldSummaryDeleteCommand.ExecuteNonQuery());
 
-            var summaryInsert = InternalMySqlHelper.GetInsert(conn, TablePrefix + Statics.TableSummaries, ss);
-            Print("Insert summary ({0})", summaryInsert.ExecuteNonQuery());
+                var summaryInsert = InternalMySqlHelper.GetInsert(conn, TablePrefix + Statics.TableSummaries, ss);
+                Print("Insert summary ({0})", summaryInsert.ExecuteNonQuery());
+            }
                             
             Print("Solved tickets: {0}/{1}", ss.SolvedTickets, ss.TotalTickets);
             Print("Deployed tickets: {0} ", ss.DeployedTickets);

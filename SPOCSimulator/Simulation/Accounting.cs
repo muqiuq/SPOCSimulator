@@ -22,7 +22,7 @@ namespace SPOCSimulator.Simulation
 
         public void Book(long hourlyWage, int ticks)
         {
-            TotalExpenses += (int)(hourlyWage * (double)ticks / 60);
+            TotalExpenses += (int)(hourlyWage * ((double)ticks / 60));
             TotalWorkingHours += (double)ticks / 60;
         }
     }

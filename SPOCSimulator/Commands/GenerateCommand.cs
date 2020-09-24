@@ -105,8 +105,8 @@ namespace SPOCSimulator.Commands
         public Dictionary<SupportLevel, int> GetLevelDifficulties()
         {
             Dictionary<SupportLevel, int> difficultyToSolveDurationMin = new Dictionary<SupportLevel, int>() {
-                { SupportLevel.Level1st, Math.Max(2,(int)Math.Abs(g1stLevelDuration.Sample()))},
-                { SupportLevel.Level2nd, Math.Max(2,(int)Math.Abs(g2ndLevelDuration.Sample()))},
+                { SupportLevel.Level1st, Math.Max(BoundaryConditions.TicketResolvTime1stLevelMin, (int)Math.Abs(g1stLevelDuration.Sample()))},
+                { SupportLevel.Level2nd, Math.Max(BoundaryConditions.TicketResolvTime2ndLevelMin, (int)Math.Abs(g2ndLevelDuration.Sample()))},
             };
 
             return difficultyToSolveDurationMin;

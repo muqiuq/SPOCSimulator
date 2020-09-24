@@ -12,11 +12,9 @@ namespace SPOCSimulator.Simulation.Ticker
     public class EmployeeTicker : ITicker
     {
         private readonly int id;
-        private TicketQueue inputQueue;
+        private MultiLevelTicketQueue inputQueue;
 
         private TicketQueue doneOutputQueue;
-
-        private TicketQueue escalateOutputQueue;
 
         private EmployeeType employeeType;
 
@@ -44,12 +42,11 @@ namespace SPOCSimulator.Simulation.Ticker
         private Accounting accounting;
 
 
-        public EmployeeTicker(int id, TicketQueue inputQueue, TicketQueue doneOutputQueue, TicketQueue escalateOutputQueue, EmployeeType employeeType, int shiftEnd, Accounting accounting)
+        public EmployeeTicker(int id, MultiLevelTicketQueue inputQueue, TicketQueue doneOutputQueue, EmployeeType employeeType, int shiftEnd, Accounting accounting)
         {
             this.id = id;
             this.inputQueue = inputQueue;
             this.doneOutputQueue = doneOutputQueue;
-            this.escalateOutputQueue = escalateOutputQueue;
             this.employeeType = employeeType;
             this.shiftEnd = shiftEnd;
 
@@ -134,10 +131,14 @@ namespace SPOCSimulator.Simulation.Ticker
                     else
                     {
                         // No ticket? Get a new one!
-                        currentTicket = inputQueue.Dequeue();
+                        currentTicket = inputQueue.Dequeue(employeeType.Level, out var lowerLevel);
                         if (!HasTicket) return;
 
                         ticksToFinish = (int)(currentTicket.TicksToSolve(employeeType.Level) * employeeType.DurationFactor);
+                        /*if(lowerLevel)
+                        {
+                            ticksToFinish += currentTicket.TicksToSolve(employeeType.Level-1);
+                        }*/
                         var oldTicksToFinish = ticksToFinish;
                         if (workedTicks > BoundaryConditions.EmployeeEfficencyDecayStartTicks)
                         {
@@ -161,14 +162,14 @@ namespace SPOCSimulator.Simulation.Ticker
                     {
                         Console.WriteLine(string.Format("{0} > ID {1} [{2}] failed to solve ticket ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
                         currentTicket.StopSolving(ticks);
-                        inputQueue.Enqueue(currentTicket);
+                        inputQueue.Enqueue(employeeType.Level, currentTicket);
                     }
                     else if (currentTicket.MoreDifficultyThen(employeeType.Level))
                     {
                         if (employeeType.Level == SupportLevel.Level2nd) Debugger.Break();
                         currentTicket.StopSolving(ticks);
                         Console.WriteLine(string.Format("{0} > ID {1} [{2}] escalated ticket after ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
-                        escalateOutputQueue.Enqueue(currentTicket);
+                        inputQueue.Enqueue(employeeType.Level+1, currentTicket);
                     }
                     else
                     {
@@ -186,7 +187,7 @@ namespace SPOCSimulator.Simulation.Ticker
                 if (ticksToFinish <= 0)
                 {
                     Console.WriteLine(string.Format("{0} > ID {1} [{2}] Going home after {3} and doing {4} tickets", ticks, id, employeeType.Level, workedTicks, doneTickets));
-                    accounting.Book(employeeType.HourlyWage, ticks);
+                    accounting.Book(employeeType.HourlyWage, workedTicks);
                     employeeTickerState = EmployeeTickerState.Done;
                 }
             }

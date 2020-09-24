@@ -1,4 +1,5 @@
 ﻿using SPOCSimulator.Generator;
+using SPOCSimulator.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,13 +9,13 @@ namespace SPOCSimulator.Simulation.Ticker
 {
     public class NewTicketTicker : ITicker
     {
-        private readonly TicketQueue primaryInputQueue;
+        private readonly MultiLevelTicketQueue inputQueue;
         private List<TicketEntity> tickets;
 
-        public NewTicketTicker(TicketGenerationPlan plan, TicketQueue primaryInputQueue)
+        public NewTicketTicker(TicketGenerationPlan plan, MultiLevelTicketQueue inputQueue)
         {
             tickets = plan.Tickets.OrderBy(t => t.createAtTicks).ToList();
-            this.primaryInputQueue = primaryInputQueue;
+            this.inputQueue = inputQueue;
         }
 
         public bool Destroyable()
@@ -28,7 +29,7 @@ namespace SPOCSimulator.Simulation.Ticker
             foreach(var ticket in ticketsToAdd)
             {
                 ticket.SetDeployed(ticks);
-                primaryInputQueue.Enqueue(ticket);
+                inputQueue.Enqueue(SupportLevel.Level1st, ticket);
             }
         }
     }

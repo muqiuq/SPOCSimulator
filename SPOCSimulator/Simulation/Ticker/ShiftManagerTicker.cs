@@ -11,9 +11,8 @@ namespace SPOCSimulator.Simulation.Ticker
     {
         private WorkshiftsCM workshiftsCM;
         private ITickerManager tickerManager;
-        private TicketQueue primaryInputQueue;
+        private MultiLevelTicketQueue inputQueue;
         private TicketQueue doneQueue;
-        private TicketQueue firstToSecondLevelQueue;
 
         private int ContinousEmployeeId = 0;
         private Accounting accounting;
@@ -21,15 +20,14 @@ namespace SPOCSimulator.Simulation.Ticker
         public ShiftManagerTicker(
             ITickerManager tickerManager,
             WorkshiftsCM workshiftsCM,
-            TicketQueue primaryInputQueue,
+            MultiLevelTicketQueue inputQueue,
             TicketQueue doneQueue,
-            TicketQueue firstToSecondLevelQueue, Accounting accounting)
+            Accounting accounting)
         {
             this.workshiftsCM = workshiftsCM;
             this.tickerManager = tickerManager;
-            this.primaryInputQueue = primaryInputQueue;
+            this.inputQueue = inputQueue;
             this.doneQueue = doneQueue;
-            this.firstToSecondLevelQueue = firstToSecondLevelQueue;
             this.accounting = accounting;
         }
 
@@ -49,15 +47,9 @@ namespace SPOCSimulator.Simulation.Ticker
                 {
                     for(int a = 0; a < employeeTypeAndAmount.Value; a++)
                     {
-                        TicketQueue primaryQueueForEmployee = primaryInputQueue;
-                        if(employeeTypeAndAmount.Key.Level == Models.SupportLevel.Level2nd)
-                        {
-                            primaryQueueForEmployee = firstToSecondLevelQueue;
-                        }
                         tickerManager.Add(new EmployeeTicker(ContinousEmployeeId,
-                            primaryQueueForEmployee, 
+                            inputQueue, 
                             doneQueue, 
-                            firstToSecondLevelQueue, 
                             employeeTypeAndAmount.Key, 
                             day * BoundaryConditions.DayLength +  startingShift.End,
                             accounting));
