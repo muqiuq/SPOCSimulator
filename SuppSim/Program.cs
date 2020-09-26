@@ -9,8 +9,10 @@ namespace SPOCSimulator
     {
         static void Main(string[] args)
         {
-            //try
-            //{
+#if (!DEBUG)
+            try
+            {
+#endif
                 var parsed = Parser.Default.ParseArguments<
                     VoidCommand,
                     ExampleCommand,
@@ -25,11 +27,12 @@ namespace SPOCSimulator
                     (RunCommand c) => c.Run(),
                     (DbCommand c) => c.Run(),
                     e => 1);
-            /*}catch(Exception e)
+#if (!DEBUG)
+            }catch(Exception e)
             {
                 Console.WriteLine(e);
-                if (Debugger.IsAttached) throw e;
-            }*/
+            }
+#endif
 
         }
     }

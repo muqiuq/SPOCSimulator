@@ -5,6 +5,15 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>SuppSim</RootNamespace>
     <AssemblyName>SuppSim</AssemblyName>
+    <Authors>Philipp Albrecht &lt;info@uisa.ch&gt;</Authors>
+    <Company />
+    <Description>Simulate ticket flow within two support levels.</Description>
+    <Copyright>(C) 24.09.2020 Philipp Albrecht &lt;info@uisa.ch&gt;</Copyright>
+    <PackageProjectUrl>https://github.com/muqiuq/SuppSim</PackageProjectUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

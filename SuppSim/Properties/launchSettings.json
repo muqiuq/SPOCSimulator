@@ -1,8 +1,7 @@
 {
   "profiles": {
-    "SPOCSimulator": {
-      "commandName": "Project",
-      "commandLineArgs": "void --boundary-read"
+    "SuppSim": {
+      "commandName": "Project"
     }
   }
 }

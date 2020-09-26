@@ -16,9 +16,15 @@ Select Min(TotalCosts / SolvedTickets) from summaries
 ```sql
 Select 
 Marker,
-NOW() as time,
-(($LowestAverageSolveTime / AverageTicketSolveDuration  * 0.5 +  $LowestCost / TotalCosts * 0.5)) as Score
+MAX(NOW()) as time,
+MAX(
+    (select min(AverageTicketSolveDuration) from summaries) / AverageTicketSolveDuration  * 0.4 +  
+    (Select Min(TotalCosts) from summaries) / TotalCosts * 0.1 + 
+    ((Select Min(TotalCosts / SolvedTickets) from summaries) / (TotalCosts / SolvedTickets) * 0.5) -
+    (TotalUnsolvedTickets * 0.01)
+  ) as Score
 From summaries
+group by Marker
 order by Score Desc
 ```
 
