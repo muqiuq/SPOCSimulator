@@ -162,7 +162,13 @@ namespace SPOCSimulator.Simulation.Ticker
                     {
                         Console.WriteLine(string.Format("{0} > ID {1} [{2}] failed to solve ticket ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
                         currentTicket.StopSolving(ticks);
-                        inputQueue.Enqueue(employeeType.Level, currentTicket);
+                        // Failed? Give it to the next higher level. No higher level available? give to someone else. 
+                        SupportLevel nextSupportLevel = employeeType.Level + 1;
+                        if(!Enum.IsDefined(typeof(SupportLevel), nextSupportLevel))
+                        {
+                            nextSupportLevel = employeeType.Level;
+                        }
+                        inputQueue.Enqueue(nextSupportLevel, currentTicket);
                     }
                     else if (currentTicket.MoreDifficultyThen(employeeType.Level))
                     {
