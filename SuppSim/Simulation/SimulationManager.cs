@@ -89,7 +89,7 @@ namespace SPOCSimulator.Simulation
                                 unixTimestamp + tick * 60,
                                 day, tick,
                                 plan.Tickets.Where(t => t.Deployed && !t.Solved).Count(),
-                                inputQueue.Count(Models.SupportLevel.Level1st),
+                                inputQueue.Count(),
                                 inputQueue.Count(Models.SupportLevel.Level2nd),
                                 doneQueue.Count,
                                 activeEmployees.Count(t => t.WarmUp),

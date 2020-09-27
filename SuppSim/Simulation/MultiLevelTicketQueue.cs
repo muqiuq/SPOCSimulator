@@ -25,6 +25,11 @@ namespace SPOCSimulator.Simulation
             return supportLevelToTicketQueue[supportLevel].Count != 0;
         }
 
+        public int Count()
+        {
+            return supportLevelToTicketQueue.Sum(i => i.Value.Count);
+        }
+
         public int Count(SupportLevel supportLevel)
         {
             return supportLevelToTicketQueue[supportLevel].Count;
