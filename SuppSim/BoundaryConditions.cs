@@ -11,15 +11,15 @@ namespace SPOCSimulator
         public static int DayLength = 1440;
 
         [JsonProperty]
-        public static int EmployeeWarmUpDuration { get; set; } = 15;
+        public static int EmployeeWarmUpDuration { get; set; } = 20;
         [JsonProperty]
         public static int EmployeeCleanUpDuration { get; set; } = 15;
 
         // All values in ticks (1 tick = 1 minute)
         [JsonProperty]
-        public static int TicketResolvTime1stLevelMin { get; set; } = 5;
+        public static int TicketResolvTime1stLevelMin { get; set; } = 7;
         [JsonProperty]
-        public static int TicketResolvTime1stLevelMean { get; set; } = 7;
+        public static int TicketResolvTime1stLevelMean { get; set; } = 8;
         [JsonProperty]
         public static int TicketResolvTime1stLevelStdDev { get; set; } = 10;
         [JsonProperty]
