@@ -100,12 +100,12 @@ namespace SPOCSimulator.Commands
                     Print("Deleted old summary (if exists) ({0})", oldSummaryDeleteCommand.ExecuteNonQuery());
                 }
 
-                var getRunNumberCmd = new MySqlCommand(string.Format("select ifnull(min(run),0) as min from datapoints where marker=@Marker", Statics.TableSummaries), conn);
+                var getRunNumberCmd = new MySqlCommand(string.Format("select ifnull(max(run),0) as max from datapoints where marker=@Marker", Statics.TableSummaries), conn);
                 getRunNumberCmd.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
                 using (var getRunNumberCmdReader = getRunNumberCmd.ExecuteReader())
                 {
                     getRunNumberCmdReader.Read();
-                    run = getRunNumberCmdReader.GetInt32("min") + 1;
+                    run = getRunNumberCmdReader.GetInt32("max") + 1;
                 }
                 Print("Run number {0}", run);
             }
