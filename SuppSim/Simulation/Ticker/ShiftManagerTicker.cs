@@ -17,6 +17,9 @@ namespace SPOCSimulator.Simulation.Ticker
         private int ContinousEmployeeId = 0;
         private Accounting accounting;
 
+        public delegate void LogDelegate(string text);
+        public event LogDelegate LogEvent;
+
         public ShiftManagerTicker(
             ITickerManager tickerManager,
             WorkshiftsCM workshiftsCM,
@@ -47,17 +50,26 @@ namespace SPOCSimulator.Simulation.Ticker
                 {
                     for(int a = 0; a < employeeTypeAndAmount.Value; a++)
                     {
-                        tickerManager.Add(new EmployeeTicker(ContinousEmployeeId,
-                            inputQueue, 
-                            doneQueue, 
-                            employeeTypeAndAmount.Key, 
-                            day * BoundaryConditions.DayLength +  startingShift.End,
-                            accounting));
+                        var employeeTicker = new EmployeeTicker(ContinousEmployeeId,
+                            inputQueue,
+                            doneQueue,
+                            employeeTypeAndAmount.Key,
+                            day * BoundaryConditions.DayLength + startingShift.End,
+                            accounting);
+
+                        employeeTicker.LogEvent += EmployeeTicker_LogEvent;
+
+                        tickerManager.Add(employeeTicker);
 
                         ContinousEmployeeId++;
                     }
                 }
             }
+        }
+
+        private void EmployeeTicker_LogEvent(string text)
+        {
+            LogEvent?.Invoke(text);
         }
     }
 }

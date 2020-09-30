@@ -36,10 +36,20 @@ namespace SPOCSimulator.Simulation
             this.workshiftsCM = workshiftsCM;
             this.plan = plan;
             this.daysToSimulate = daysToSimulate;
-            Add(new ShiftManagerTicker(this, workshiftsCM, inputQueue, doneQueue, Accounting));
+
+            // Init Basic Tickers
+            var shiftManager = new ShiftManagerTicker(this, workshiftsCM, inputQueue, doneQueue, Accounting);
+            shiftManager.LogEvent += ShiftManager_LogEvent;
+            Add(shiftManager);
             Add(new NewTicketTicker(plan, inputQueue));
-            //unixTimestamp = (Int32)(DateTime.Today.Subtract(new DateTime(1970, 1, 1).ToUniversalTime())).TotalSeconds;
+
+            // Needed for Grafana
             unixTimestamp = (Int32)((DateTimeOffset)DateTime.Today.ToUniversalTime()).ToUnixTimeSeconds();
+        }
+
+        private void ShiftManager_LogEvent(string text)
+        {
+            LogEvent?.Invoke(text);
         }
 
         public List<ITicker> Tickers { get; private set; } = new List<ITicker>();
@@ -61,7 +71,6 @@ namespace SPOCSimulator.Simulation
             int lastDay = 0;
             for (int tick = 0; tick < ticksToSimulate; tick++)
             {
-
                 var day = tick / BoundaryConditions.DayLength;
                 if (day != lastDay)
                 {

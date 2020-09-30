@@ -41,6 +41,9 @@ namespace SPOCSimulator.Simulation.Ticker
 
         private Accounting accounting;
 
+        public delegate void LogDelegate(string text);
+        public event LogDelegate LogEvent;
+
 
         public EmployeeTicker(int id, MultiLevelTicketQueue inputQueue, TicketQueue doneOutputQueue, EmployeeType employeeType, int shiftEnd, Accounting accounting)
         {
@@ -111,7 +114,7 @@ namespace SPOCSimulator.Simulation.Ticker
                 ticksToFinish--;
                 if (ticksToFinish <= 0)
                 {
-                    Console.WriteLine(string.Format("{0} > ID {1} [{2}] WarmUp Done after {3}", ticks, id, employeeType.Level, workedTicks));
+                    LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] WarmUp Done after {3}", ticks, id, employeeType.Level, workedTicks));
                     employeeTickerState = EmployeeTickerState.Working;
                 }
                 workedTicks++;
@@ -123,7 +126,7 @@ namespace SPOCSimulator.Simulation.Ticker
                 {
                     if (ticks >= shiftEnd)
                     {
-                        Console.WriteLine(string.Format("{0} > ID {1} [{2}] shifts done after {3}", ticks, id, employeeType.Level, workedTicks));
+                        LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] shifts done after {3}", ticks, id, employeeType.Level, workedTicks));
                         // Shift done go into cleanup
                         employeeTickerState = EmployeeTickerState.CleanUp;
                         ticksToFinish = (int)(BoundaryConditions.EmployeeCleanUpDuration * employeeType.DurationFactor);
@@ -133,12 +136,12 @@ namespace SPOCSimulator.Simulation.Ticker
                         // No ticket? Get a new one!
                         currentTicket = inputQueue.Dequeue(employeeType.Level, out var lowerLevel);
                         if (!HasTicket) return;
-
                         ticksToFinish = (int)(currentTicket.TicksToSolve(employeeType.Level) * employeeType.DurationFactor);
-                        /*if(lowerLevel)
+                        if (lowerLevel)
                         {
-                            ticksToFinish += currentTicket.TicksToSolve(employeeType.Level-1);
-                        }*/
+                            var lowerLevelDuration = currentTicket.TicksToSolve(employeeType.Level - 1);
+                            ticksToFinish = (int)((double)lowerLevelDuration * 3 + (double)ticksToFinish) / 4;
+                        }
                         var oldTicksToFinish = ticksToFinish;
                         if (workedTicks > BoundaryConditions.EmployeeEfficencyDecayStartTicks)
                         {
@@ -148,7 +151,7 @@ namespace SPOCSimulator.Simulation.Ticker
                         // Dirty security hack in case of over/underflow
                         if (oldTicksToFinish > ticksToFinish) ticksToFinish = oldTicksToFinish;
                         currentTicket.StartSolving(ticks);
-                        Console.WriteLine(string.Format("{0} > ID {1} [{2}] Getting new ticket ({3})", ticks, id, employeeType.Level, workedTicks, ticksToFinish));
+                        LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] Getting new ticket ({3})", ticks, id, employeeType.Level, workedTicks, ticksToFinish));
                     }
                 }
                 else if (ticksToFinish > 0)
@@ -160,7 +163,7 @@ namespace SPOCSimulator.Simulation.Ticker
                     doneTickets++;
                     if(equallyDistributedNumber.Next() > (employeeType.SuccessRate * 100))
                     {
-                        Console.WriteLine(string.Format("{0} > ID {1} [{2}] failed to solve ticket ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
+                        LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] failed to solve ticket ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
                         currentTicket.StopSolving(ticks);
                         // Failed? Give it to the next higher level. No higher level available? give to someone else. 
                         SupportLevel nextSupportLevel = employeeType.Level + 1;
@@ -174,13 +177,13 @@ namespace SPOCSimulator.Simulation.Ticker
                     {
                         if (employeeType.Level == SupportLevel.Level2nd) Debugger.Break();
                         currentTicket.StopSolving(ticks);
-                        Console.WriteLine(string.Format("{0} > ID {1} [{2}] escalated ticket after ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
+                        LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] escalated ticket after ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
                         inputQueue.Enqueue(employeeType.Level+1, currentTicket);
                     }
                     else
                     {
                         currentTicket.StopSolving(ticks);
-                        Console.WriteLine(string.Format("{0} > ID {1} [{2}] finished ticket after ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
+                        LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] finished ticket after ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
                         doneOutputQueue.Enqueue(currentTicket);
                     }
                     currentTicket = null;
@@ -192,7 +195,7 @@ namespace SPOCSimulator.Simulation.Ticker
                 ticksToFinish--;
                 if (ticksToFinish <= 0)
                 {
-                    Console.WriteLine(string.Format("{0} > ID {1} [{2}] Going home after {3} and doing {4} tickets", ticks, id, employeeType.Level, workedTicks, doneTickets));
+                    LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] Going home after {3} and doing {4} tickets", ticks, id, employeeType.Level, workedTicks, doneTickets));
                     accounting.Book(employeeType.HourlyWage, workedTicks);
                     employeeTickerState = EmployeeTickerState.Done;
                 }
@@ -205,7 +208,7 @@ namespace SPOCSimulator.Simulation.Ticker
         {
             if(employeeTickerState == EmployeeTickerState.Done)
             {
-                Console.WriteLine(string.Format("[{2}] worked for {0} and did {1} tickets", workedTicks, doneTickets, employeeType.Level));
+                LogEvent?.Invoke(string.Format("[{2}] worked for {0} and did {1} tickets", workedTicks, doneTickets, employeeType.Level));
             }
             return employeeTickerState == EmployeeTickerState.Done;
         }
