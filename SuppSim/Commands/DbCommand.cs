@@ -18,26 +18,32 @@ namespace SPOCSimulator.Commands
         {
         }
 
-        [Option("testconn", HelpText = "Test Connection")]
+        [Option("testconn", HelpText = "Test connection")]
         public bool DoTestConnection { get; set; }
 
-        [Option("createtables", HelpText = "Create Datapoint table")]
+        [Option("createtables", HelpText = "Create datapoints and summaries table")]
         public bool DoCreateTable { get; set; }
 
-        [Option("droptables", HelpText = "Drop Datapoint table")]
+        [Option("droptables", HelpText = "Drop datapoints and summaries tables")]
         public bool DoDropTable { get; set; }
 
-        [Option("truncatetables", HelpText = "Drop Datapoint table")]
+        [Option("truncatetables", HelpText = "Drop datapoints and summaries tables")]
         public bool DoTruncateTable { get; set; }
 
-        [Option("dropcreate", HelpText = "Drop first (if exists) and create tables")]
+        [Option("dropcreate", HelpText = "Drop first (if exists) and create datapoints and summaries tables")]
         public bool DoDropCreate { get; set; }
+
+        [Option("clearmarker", HelpText = "clear tables using a specific marker")]
+        public bool ClearTablesUsingMarker { get; set; }
+
+        [Option("marker", HelpText = "Marker used for clearmarker function", Default = null)]
+        public string Marker { get; set; }
 
         public int Run()
         {
-            if (Helper.DiffersFromThreshold(1, DoTestConnection, DoCreateTable, DoDropTable, DoTruncateTable, DoDropCreate))
+            if (Helper.DiffersFromThreshold(1, DoTestConnection, DoCreateTable, DoDropTable, DoTruncateTable, DoDropCreate, ClearTablesUsingMarker))
             {
-                Print("You may only select one function!");
+                Print("You may only select one function! (Use --help for more information)");
                 return 1;
             }
             
@@ -59,6 +65,16 @@ namespace SPOCSimulator.Commands
             {
                 DropTables(true);
                 CreateTables();
+            }
+            if(ClearTablesUsingMarker)
+            {
+                if(Marker == null)
+                {
+                    Print("Marker must be set!");
+                    return 1;
+                }
+                Print("Deleted datapoints (if exists) ({0})", DeleteDatapointsForMarker(Marker));
+                Print("Deleted summary (if exists) ({0})", DeleteSummariesForMarker(Marker));
             }
 
             return 0;

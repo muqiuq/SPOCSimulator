@@ -90,5 +90,17 @@ namespace SPOCSimulator.Commands
             DropTable(TablePrefix + Statics.TableDatapoints, ifExists);
             DropTable(TablePrefix + Statics.TableSummaries, ifExists);
         }
+
+        private int DeleteForMarker(string marker, string table)
+        {
+            var deleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", table), conn);
+            deleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = marker;
+            return deleteCommand.ExecuteNonQuery();
+        }
+
+        protected int DeleteDatapointsForMarker(string marker) => DeleteForMarker(marker, Statics.TableDatapoints);
+        
+        protected int DeleteSummariesForMarker(string marker) => DeleteForMarker(marker, Statics.TableSummaries);
+
     }
 }

@@ -34,11 +34,14 @@ namespace SPOCSimulator.Commands
         [Option("truncate", HelpText = "Truncate table first", Default = false)]
         public bool TruncateFirst { get; set; }
 
-        [Option("dropfirst", HelpText = "Drop and create table first", Default = false)]
+        [Option("dropfirst", HelpText = "Drop and create tables in db first", Default = false)]
         public bool DropAndCreateFirst { get; set; }
 
-        [Option("clearmarker", HelpText = "Clear datapoints and summaries for marker", Default = false)]
+        [Option("clearmarker", HelpText = "Clear datapoints and summaries in db for marker", Default = false)]
         public bool ClearTablesForMarker { get; set; }
+
+        [Option("debug", HelpText = "Show Debug output", Default = false)]
+        public bool Debug { get; set; }
 
         [Option('n', "Name", HelpText = "Name (Tag) for the current run.", Required = true)]
         public string Name { get; set; }
@@ -52,7 +55,12 @@ namespace SPOCSimulator.Commands
             if(UseDatabase)
             {
                 ConnectDb();
+            } else if (TruncateFirst || DropAndCreateFirst || ClearTablesForMarker)
+            {
+                Print("You cannot do any data operations without --usedb");
+                return 1;
             }
+
 
             EmployeeTypesCM employeeTypesCM = new EmployeeTypesCM();
             employeeTypesCM.Load(EmployeeTypesFilename);
@@ -81,7 +89,6 @@ namespace SPOCSimulator.Commands
                 if(DropAndCreateFirst)
                 {
                     DropTables(true);
-
                     CreateTables();
                 }
                 if(TruncateFirst)
@@ -91,13 +98,8 @@ namespace SPOCSimulator.Commands
 
                 if (ClearTablesForMarker)
                 {
-                    var oldDatapointsDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", Statics.TableDatapoints), conn);
-                    oldDatapointsDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
-                    Print("Deleted old datapoints (if exists) ({0})", oldDatapointsDeleteCommand.ExecuteNonQuery());
-
-                    var oldSummaryDeleteCommand = new MySqlCommand(string.Format("DELETE FROM {0} WHERE Marker=@Marker", Statics.TableSummaries), conn);
-                    oldSummaryDeleteCommand.Parameters.Add("@Marker", MySqlDbType.VarChar).Value = Name;
-                    Print("Deleted old summary (if exists) ({0})", oldSummaryDeleteCommand.ExecuteNonQuery());
+                    Print("Deleted old datapoints (if exists) ({0})", DeleteDatapointsForMarker(Name));
+                    Print("Deleted old summary (if exists) ({0})", DeleteSummariesForMarker(Name));
                 }
 
                 var getRunNumberCmd = new MySqlCommand(string.Format("select ifnull(max(run),0) as max from datapoints where marker=@Marker", Statics.TableSummaries), conn);
@@ -117,7 +119,10 @@ namespace SPOCSimulator.Commands
                 sm.NewDatapoint += Sm_NewDatapoint;
             }
 
-            sm.LogEvent += Print;
+            if(Debug)
+            {
+                sm.LogEvent += Print;
+            }
 
             sm.Run();
 
