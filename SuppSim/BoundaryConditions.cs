@@ -17,7 +17,7 @@ namespace SPOCSimulator
 
         // All values in ticks (1 tick = 1 minute)
         [JsonProperty]
-        public static int TicketResolvTime1stLevelMin { get; set; } = 7;
+        public static int TicketResolvTime1stLevelMin { get; set; } = 5;
         [JsonProperty]
         public static int TicketResolvTime1stLevelMean { get; set; } = 8;
         [JsonProperty]
@@ -25,9 +25,9 @@ namespace SPOCSimulator
         [JsonProperty]
         public static int TicketResolvTime2ndLevelMin { get; set; } = 15;
         [JsonProperty]
-        public static int TicketResolvTime2ndLevelMean { get; set; } = 35;
+        public static int TicketResolvTime2ndLevelMean { get; set; } = 120;
         [JsonProperty]
-        public static int TicketResolvTime2ndLevelStdDev { get; set; } = 20;
+        public static int TicketResolvTime2ndLevelStdDev { get; set; } = 45;
 
         // Factor of 2 would mean 50% 1st, 50% 2nd, 1.5 is 70% 1st
         [JsonProperty]
