@@ -86,9 +86,12 @@ namespace SPOCSimulator.Simulation.Ticker
             NumberOfStarts++;
         }
 
-        public void StopSolving(int ticks)
+        public void StopSolving(int ticks, SupportLevel solvedByLevel)
         {
-            if (stopTicks == null || stopTicks < ticks) stopTicks = ticks;
+            if (solvedByLevel >= Difficulty)
+            {
+                if (stopTicks == null || stopTicks < ticks) stopTicks = ticks;
+            }
         }
 
         public bool MoreDifficultyThen(SupportLevel sp)

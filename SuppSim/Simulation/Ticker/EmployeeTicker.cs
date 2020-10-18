@@ -140,7 +140,7 @@ namespace SPOCSimulator.Simulation.Ticker
                         if (lowerLevel)
                         {
                             var lowerLevelDuration = currentTicket.TicksToSolve(employeeType.Level - 1);
-                            ticksToFinish = (int)((double)lowerLevelDuration * 3 + (double)ticksToFinish) / 4;
+                            ticksToFinish = (int)((double)lowerLevelDuration + (double)ticksToFinish) / 2;
                         }
                         var oldTicksToFinish = ticksToFinish;
                         if (workedTicks > BoundaryConditions.EmployeeEfficencyDecayStartTicks)
@@ -164,7 +164,7 @@ namespace SPOCSimulator.Simulation.Ticker
                     if(equallyDistributedNumber.Next() > (employeeType.SuccessRate * 100))
                     {
                         LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] failed to solve ticket ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
-                        currentTicket.StopSolving(ticks);
+                        currentTicket.StopSolving(ticks, employeeType.Level);
                         // Failed? Give it to the next higher level. No higher level available? give to someone else. 
                         SupportLevel nextSupportLevel = employeeType.Level + 1;
                         if(!Enum.IsDefined(typeof(SupportLevel), nextSupportLevel))
@@ -176,13 +176,13 @@ namespace SPOCSimulator.Simulation.Ticker
                     else if (currentTicket.MoreDifficultyThen(employeeType.Level))
                     {
                         if (employeeType.Level == SupportLevel.Level2nd) Debugger.Break();
-                        currentTicket.StopSolving(ticks);
+                        currentTicket.StopSolving(ticks, employeeType.Level);
                         LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] escalated ticket after ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
                         inputQueue.Enqueue(employeeType.Level+1, currentTicket);
                     }
                     else
                     {
-                        currentTicket.StopSolving(ticks);
+                        currentTicket.StopSolving(ticks, employeeType.Level);
                         LogEvent?.Invoke(string.Format("{0} > ID {1} [{2}] finished ticket after ", ticks, id, employeeType.Level, workedTicks, currentTicket.Duration));
                         doneOutputQueue.Enqueue(currentTicket);
                     }
